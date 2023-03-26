@@ -13,7 +13,7 @@ root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
 not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
 
 only_allow = [root_dir + '/mfa']
-consider_only_allow = False
+consider_only_allow = True
 
 max_tokens = 500
 
@@ -111,9 +111,12 @@ mdx_content_tokens = []
 for i in mdx_content:
     mdx_content_tokens.append(to_token(i))
 
+embeddings = openai.Embedding.create(
+    engine='text-embedding-ada-002',
+    input=mdx_content_tokens[0]
+)['data'][0]['embedding']
 
-
-
+print(embeddings)
 
 
 
