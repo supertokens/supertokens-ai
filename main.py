@@ -13,7 +13,7 @@ root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
 not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
 
 only_allow = [root_dir + '/mfa']
-consider_only_allow = True
+consider_only_allow = False
 
 max_tokens = 500
 
@@ -59,7 +59,7 @@ def split_into_many(text, max_tokens = max_tokens):
     return chunks
 
 
-def list_contents_in_mdx_files(root_dir):
+def convert_mdx_to_chunks(root_dir):
     mdx_content = []
     for subdir, dirs, files in os.walk(root_dir):
         for file in files:
@@ -76,14 +76,17 @@ def list_contents_in_mdx_files(root_dir):
                     continue
                 with open(filepath, 'r') as f:
                     contents = f.read()
-                    h2chunks = re.split(r'(?<=^##\s)', contents, flags=re.MULTILINE)
-                    for chunk in h2chunks:
-                        finalChunk_without_tags = re.sub(r'<[^>]+>', '', chunk)
-                        finalChunk_without_tags = finalChunk_without_tags.replace("##", "")
-                        finalChunk_without_tags = finalChunk_without_tags.replace(":::", "")
-                        chunk_within_token_limit = split_into_many(finalChunk_without_tags)
-                        for i in chunk_within_token_limit:
-                            mdx_content.append(i)
+                    if (len(tokenizer.encode(contents)) > max_tokens):
+                        h2chunks = re.split(r'(?<=^##\s)', contents, flags=re.MULTILINE)
+                        for chunk in h2chunks:
+                            finalChunk_without_tags = re.sub(r'<[^>]+>', '', chunk)
+                            finalChunk_without_tags = finalChunk_without_tags.replace("##", "")
+                            finalChunk_without_tags = finalChunk_without_tags.replace(":::", "")
+                            chunk_within_token_limit = split_into_many(finalChunk_without_tags)
+                            for i in chunk_within_token_limit:
+                                mdx_content.append(i)
+                    else:
+                        mdx_content.append(contents)
     return mdx_content
                     
 
@@ -101,7 +104,7 @@ def decode_tokens(token_ids):
     # Return list of text tokens
     return text_tokens.split()
 
-mdx_content = list_contents_in_mdx_files(root_dir)
+mdx_content = convert_mdx_to_chunks(root_dir)
 
 # convert the mdx_content list into a list tokens
 mdx_content_tokens = []
