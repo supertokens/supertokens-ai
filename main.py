@@ -4,24 +4,26 @@ import os
 import tiktoken
 from dotenv import load_dotenv
 import pandas as pd
+from openai.embeddings_utils import distances_from_embeddings
+import numpy as np
 load_dotenv()
+
+root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
+not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
+only_allow = [root_dir + '/mfa']
+consider_only_allow = True
+max_tokens = 500
+embeddings_location = 'processed/' + str(max_tokens) + '-limit.csv'
+output_max_tokes = 2048
+
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
 
-if os.path.exists('processed/scraped.csv'):
-    df = pd.read_csv('processed/scraped.csv')
+if os.path.exists(embeddings_location):
+    df = pd.read_csv(embeddings_location)
 else:
     df = pd.DataFrame(columns=['text', 'embeddings'])
-
-root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
-
-not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
-
-only_allow = [root_dir + '/mfa']
-consider_only_allow = True
-
-max_tokens = 500
 
 chunks_ignored = 0
 
@@ -125,14 +127,12 @@ for i in mdx_content:
 
 new_df = pd.DataFrame(columns=['text', 'embeddings'])
 for i in range(len(mdx_content_tokens)):
-    print("=========================")
     existing_df = find_df_for_text(mdx_content[i])
     if existing_df is not None:
         new_df.loc[i, 'text'] = existing_df['text']
         new_df.loc[i, 'embeddings'] = existing_df['embeddings']
-        print("Embedding already exists for " + str(i) + " out of " + str(len(mdx_content_tokens)))
-        print()
         continue
+    print("=========================")
     print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)))
     print()
     embeddings = openai.Embedding.create(
@@ -143,17 +143,62 @@ for i in range(len(mdx_content_tokens)):
     new_df.loc[i, 'text'] = mdx_content[i]
     new_df.loc[i, 'embeddings'] = embeddings
 
-new_df.to_csv('processed/scraped.csv', index=False)
+new_df.to_csv(embeddings_location, index=False)
 
 
+new_df['embeddings'] = new_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
 
+# Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
+def get_top_4_embeddings(question_embeddings):
+    new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
+    context = []
+    for i, row in new_df.sort_values('distances', ascending=True).iterrows():
+        if len(context) < 4:
+            context.append(row['text'])
+    
+    return "\n\n~~~\n\n".join(context)
 
+while(True):
+    # Ask the user for a question from the console
+    question = input("Enter a question (or type exit): ")
 
+    if question == "exit":
+        break
+    
+    debug = False
+    if question.startswith("DEBUG "):
+        question = question.replace("DEBUG ", "")
+        debug = True
 
+    question_tokens = to_token(question)
 
+    question_embeddings = openai.Embedding.create(
+        engine='text-embedding-ada-002',
+        input=question_tokens
+    )['data'][0]['embedding']
 
+    context = get_top_4_embeddings(question_embeddings)
 
+    prompt = f"You are an enthusiastic and friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\"\n\nContext: {context}\n\n~~~\n\nQuestion: {question}\nAnswer:"
+    if debug:
+        print("Prompt:")
+        print(prompt)
 
+    # Create a completions using the question and context
+    response = openai.Completion.create(
+        prompt=prompt,
+        temperature=0,
+        max_tokens=output_max_tokes,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        stop=None,
+        model="text-davinci-003",
+    )
+    print("Answer: ")
+    print(response["choices"][0]["text"].strip())
+    print()
+    print()
 
 # # Define a function which returns the maximum number of words across all strings in mdx_content
 # def max_words(mdx_content):
