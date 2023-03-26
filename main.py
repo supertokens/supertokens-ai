@@ -3,10 +3,16 @@ import re
 import os
 import tiktoken
 from dotenv import load_dotenv
+import pandas as pd
 load_dotenv()
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
+
+if os.path.exists('processed/scraped.csv'):
+    df = pd.read_csv('processed/scraped.csv')
+else:
+    df = pd.DataFrame(columns=['text', 'embeddings'])
 
 root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
 
@@ -57,6 +63,12 @@ def split_into_many(text, max_tokens = max_tokens):
         tokens_so_far += token + 1
 
     return chunks
+
+def find_df_for_text(text):
+    for i in range(len(df)):
+        if df.loc[i, 'text'] == text:
+            return df.loc[i]
+    return None
 
 
 def convert_mdx_to_chunks(root_dir):
@@ -111,13 +123,28 @@ mdx_content_tokens = []
 for i in mdx_content:
     mdx_content_tokens.append(to_token(i))
 
-embeddings = openai.Embedding.create(
-    engine='text-embedding-ada-002',
-    input=mdx_content_tokens[0]
-)['data'][0]['embedding']
+new_df = pd.DataFrame(columns=['text', 'embeddings'])
+for i in range(2):
+    print("=========================")
+    existing_df = find_df_for_text(mdx_content[i])
+    if existing_df is not None:
+        new_df.loc[i, 'text'] = existing_df['text']
+        new_df.loc[i, 'embeddings'] = existing_df['embeddings']
+        print("Embedding already exists for " + str(i) + " out of " + str(len(mdx_content_tokens)))
+        print()
+        continue
+    print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)))
+    print(mdx_content[i])
+    print()
+    embeddings = openai.Embedding.create(
+        engine='text-embedding-ada-002',
+        input=mdx_content_tokens[i]
+    )['data'][0]['embedding']
 
-print(embeddings)
+    new_df.loc[i, 'text'] = mdx_content[i]
+    new_df.loc[i, 'embeddings'] = embeddings
 
+new_df.to_csv('processed/scraped.csv', index=False)
 
 
 
