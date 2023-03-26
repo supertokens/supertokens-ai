@@ -10,7 +10,7 @@ load_dotenv()
 
 root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
 not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
-only_allow = [root_dir + '/mfa']
+only_allow = [root_dir + '/mfa', root_dir + '/session']
 consider_only_allow = True
 max_tokens = 500
 embeddings_location = 'processed/' + str(max_tokens) + '-limit.csv'
@@ -79,15 +79,21 @@ def convert_mdx_to_chunks(root_dir):
         for file in files:
             if file.endswith('.mdx'):
                 filepath = os.path.join(subdir, file)
+                
                 continue_to_next_loop = False
                 for i in not_allowed:
                     if i in filepath:
                         continue_to_next_loop = True
-                for i in only_allow:
-                    if i not in filepath and consider_only_allow:
-                        continue_to_next_loop = True
                 if continue_to_next_loop:
                     continue
+
+                continue_to_next_loop = True
+                for i in only_allow:
+                    if i in filepath:
+                        continue_to_next_loop = False
+                if continue_to_next_loop and consider_only_allow:
+                    continue
+                
                 with open(filepath, 'r') as f:
                     contents = f.read()
                     if (len(tokenizer.encode(contents)) > max_tokens):
