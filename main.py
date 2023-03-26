@@ -134,7 +134,6 @@ for i in range(len(mdx_content_tokens)):
         print()
         continue
     print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)))
-    print(mdx_content[i])
     print()
     embeddings = openai.Embedding.create(
         engine='text-embedding-ada-002',
