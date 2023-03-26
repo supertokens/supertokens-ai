@@ -1,8 +1,9 @@
 import openai
 import re
 import os
-import pickle
 import tiktoken
+from dotenv import load_dotenv
+load_dotenv()
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
@@ -87,7 +88,7 @@ def list_contents_in_mdx_files(root_dir):
                     
 
 # Set up OpenAI API credentials
-openai.api_key = "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"
+openai.api_key = os.environ.get('OPEN_AI_KEY')
 
 # Function to split the text into chunks of a maximum number of tokens
 def to_token(text):
