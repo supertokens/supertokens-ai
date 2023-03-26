@@ -124,7 +124,7 @@ for i in mdx_content:
     mdx_content_tokens.append(to_token(i))
 
 new_df = pd.DataFrame(columns=['text', 'embeddings'])
-for i in range(2):
+for i in range(len(mdx_content_tokens)):
     print("=========================")
     existing_df = find_df_for_text(mdx_content[i])
     if existing_df is not None:
