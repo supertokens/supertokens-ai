@@ -27,3 +27,7 @@ This will attempt to update the knowledge base. It will answer questions based o
 ```bash
 python main.py --update
 ```
+
+# Example questions it does not do well at even though the answers are in the docs:
+- What is the db schema for mysql?
+- Is there any to log out the user if user is idle for 10 mins without?
