@@ -67,10 +67,16 @@ def split_into_many(text, max_tokens):
 
     return chunks
 
-def find_df_for_text(text, chunks):
-    for i in range(len(df[chunks])):
-        if df[chunks].loc[i, 'text'] == text:
-            return df[chunks].loc[i]
+def find_df_for_text(text):
+    for chunk in chunks:
+        if chunk in existing_embeddings:
+            for i in range(len(existing_embeddings[chunk])):
+                if existing_embeddings[chunk].loc[i, 'text'] == text:
+                    return existing_embeddings[chunk].loc[i]
+    for chunk in chunks:
+        for i in range(len(df[chunk])):
+            if df[chunk].loc[i, 'text'] == text:
+                return df[chunk].loc[i]
     return None
 
 
@@ -135,7 +141,7 @@ def get_embeddings(chunk_size):
 
     new_df = pd.DataFrame(columns=['text', 'embeddings'])
     for i in range(len(mdx_content_tokens)):
-        existing_df = find_df_for_text(mdx_content[i], chunk_size)
+        existing_df = find_df_for_text(mdx_content[i])
         if existing_df is not None:
             new_df.loc[i, 'text'] = existing_df['text']
             new_df.loc[i, 'embeddings'] = existing_df['embeddings']
@@ -152,7 +158,6 @@ def get_embeddings(chunk_size):
         new_df.loc[i, 'embeddings'] = embeddings
 
     new_df.to_csv('processed/' + str(chunk_size) + '-limit.csv', index=False)
-    new_df['embeddings'] = new_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
     return new_df
 
 # Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
@@ -180,6 +185,9 @@ existing_embeddings = {}
 
 for chunk in chunks:
     existing_embeddings[chunk] = get_embeddings(chunk)    
+
+for chunk in chunks:
+    existing_embeddings[chunk]['embeddings'] = existing_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
 
 while(True):
     # Ask the user for a question from the console
