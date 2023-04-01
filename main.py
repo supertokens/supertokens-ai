@@ -205,6 +205,13 @@ for existing_embedding in existing_embeddings:
 
 existing_embeddings = {} # free up memory
 
+# now we load up discord embeddings
+discord_df = pd.read_csv('processed/discord_threads.csv')
+discord_df['embeddings'] = discord_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+
+new_df = pd.concat([new_df, discord_df])
+discord_df = {} # free up memory
+
 while(True):
     # Ask the user for a question from the console
     question = input("Enter a question (or type exit): ")
