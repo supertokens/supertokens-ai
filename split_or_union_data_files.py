@@ -6,6 +6,7 @@ def split_file(file_path, output_dir):
     file_size = os.path.getsize(file_path)
 
     if not os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
         os.makedirs(output_dir)
 
     if file_size <= max_size:
