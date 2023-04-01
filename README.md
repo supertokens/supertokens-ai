@@ -11,7 +11,6 @@ pip install -r requirements.txt
 ## Setup env vars:
 Open the .env file and set:
 - `OPEN_AI_KEY`: Your OpenAI API key
-- `DISCORD_TOKEN`: A discord bot token which can be used to scrape the SuperTokens discord server.
 - `DOCUMENTATION_PATH`: The full path to the `v2` folder location of the SuperTokens documentation on your local machine
 
 ## Run in read only mode
