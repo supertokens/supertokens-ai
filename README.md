@@ -38,8 +38,6 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 
 # Example questions it does not do well at even though the answers are in the docs:
 - What is the db schema for mysql?
-- Is there any to log out the user if user is idle for 10 mins without?
-- How to logout the user after 10 mins of inactivity?
 
 # Improvements idea:
 - When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes

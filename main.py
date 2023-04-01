@@ -171,19 +171,21 @@ def get_embeddings(chunk_size):
     return new_df
 
 # Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
-def get_top_embeddings_up_to_limit(question_embeddings, limit=4):
+def get_top_embeddings_up_to_limit(question_embeddings, context_limit=4, token_limit=3000):
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
     context = ""
     count = 0
     already_seen = []
     for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-        if count < limit and row['text'] not in already_seen:
+        if count < context_limit and row['text'] not in already_seen:
             already_seen.append(row['text'])
             to_append_text = row['text'] + "\n~~~\n";
+            if len(tokenizer.encode(context + to_append_text)) > token_limit:
+                break
             context = context + to_append_text
             count+=1
 
-        if count >= limit:
+        if count >= context_limit:
             break
     
     return context;
@@ -233,7 +235,7 @@ while(True):
 
     context = get_top_embeddings_up_to_limit(question_embeddings)
 
-    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the markdown context below, and if the question can't be answered based on the context, say \"I don't know\". Please also provide code examples if it's very relevant.\n\nContext: {context}Question: {question}\nAnswer:"
+    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\". The context has markdown snippets as well as chat conversations. Each context example is separated by \"~~~\". Please answer in depth, assuming that the user is new to SuperTokens, and provide code examples if relevant. Also assume that the person reading your answer cannot see the provided context, so do not refer to it in your answer.\nContext: \"\"\"{context}\"\"\"\nQuestion: \"\"\"{question}\"\"\"\nAnswer:"
     if debug:
         print("Prompt:")
         print(prompt)
