@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 import pandas as pd
 from openai.embeddings_utils import distances_from_embeddings
 import numpy as np
+import sys
 load_dotenv()
 
-root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
+root_dir = os.environ.get('DOCUMENTATION_PATH')
 not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
 only_allow = [root_dir + '/mfa', root_dir + '/session', root_dir + '/emailpassword']
 consider_only_allow = True
@@ -189,8 +190,11 @@ def get_top_embeddings_up_to_limit(question_embeddings, limit=4):
 
 existing_embeddings = {}
 
-for chunk in chunks:
-    existing_embeddings[chunk] = get_embeddings(chunk)    
+if len(sys.argv) > 1 and sys.argv[1] == "--update":
+    for chunk in chunks:
+        existing_embeddings[chunk] = get_embeddings(chunk)   
+else:
+     existing_embeddings = df
 
 for chunk in chunks:
     existing_embeddings[chunk]['embeddings'] = existing_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
