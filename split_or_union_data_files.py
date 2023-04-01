@@ -41,8 +41,13 @@ def combine_files(input_dir, output_path):
                 f.write(chunk_file.read())
 
 # loop through all files in processed directory
-for file in os.listdir('processed'):
-    # get file name along with extension
-    file_name = os.path.basename(file)
-    split_file('processed/' + file_name, 'chunks/' + file_name)
-    combine_files('chunks/' + file_name, 'processed/' + file_name)
+if os.path.exists('processed'):
+    for file in os.listdir('processed'):
+        # get file name along with extension
+        file_name = os.path.basename(file)
+        split_file('processed/' + file_name, 'chunks/' + file_name)
+else:
+    for file in os.listdir('chunks'):
+        # get file name along with extension
+        file_name = os.path.basename(file)
+        split_file('processed/' + file_name, 'chunks/' + file_name)
