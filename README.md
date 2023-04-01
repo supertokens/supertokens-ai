@@ -28,6 +28,14 @@ This will attempt to update the knowledge base. It will answer questions based o
 python main.py --update
 ```
 
+# Debugging prompts
+If you want to see the full prompt that is set to the OpenAI model, you can ask questions like:
+```bash
+Enter a question (or type exit): DEBUG what is apiGatewayPath in appInfo?
+```
+
+The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
+
 # Example questions it does not do well at even though the answers are in the docs:
 - What is the db schema for mysql?
 - Is there any to log out the user if user is idle for 10 mins without?
