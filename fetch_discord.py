@@ -1,7 +1,6 @@
 import requests
 import json
 
-
 # read existing threads from processed/discord_threads.json if it exists
 try:
     with open("processed/discord_threads.json", "r") as f:
