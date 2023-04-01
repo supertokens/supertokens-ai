@@ -162,9 +162,6 @@ def get_embeddings(chunk_size):
 
 # Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
 def get_top_embeddings_up_to_limit(question_embeddings, limit=4):
-    new_df = pd.DataFrame(columns=['text', 'embeddings'])
-    for existing_embedding in existing_embeddings:
-        new_df = pd.concat([new_df, existing_embeddings[existing_embedding]])
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
     context = ""
     count = 0
@@ -188,6 +185,12 @@ for chunk in chunks:
 
 for chunk in chunks:
     existing_embeddings[chunk]['embeddings'] = existing_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+
+new_df = pd.DataFrame(columns=['text', 'embeddings'])
+for existing_embedding in existing_embeddings:
+    new_df = pd.concat([new_df, existing_embeddings[existing_embedding]])
+
+existing_embeddings = {} # free up memory
 
 while(True):
     # Ask the user for a question from the console
