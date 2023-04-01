@@ -67,12 +67,15 @@ def split_into_many(text, max_tokens):
 
     return chunks
 
-def find_df_for_text(text):
+def find_df_for_text_from_existing_embeddings(text):
     for chunk in chunks:
         if chunk in existing_embeddings:
             for i in range(len(existing_embeddings[chunk])):
                 if existing_embeddings[chunk].loc[i, 'text'] == text:
                     return existing_embeddings[chunk].loc[i]
+    return None
+
+def find_df_for_text_from_df(text):
     for chunk in chunks:
         for i in range(len(df[chunk])):
             if df[chunk].loc[i, 'text'] == text:
@@ -140,22 +143,28 @@ def get_embeddings(chunk_size):
         mdx_content_tokens.append(to_token(i))
 
     new_df = pd.DataFrame(columns=['text', 'embeddings'])
-    for i in range(len(mdx_content_tokens)):
-        existing_df = find_df_for_text(mdx_content[i])
+    curr_index = 0
+    for mdx_content_token in mdx_content_tokens:
+        existing_df = find_df_for_text_from_existing_embeddings(mdx_content[curr_index])
         if existing_df is not None:
-            new_df.loc[i, 'text'] = existing_df['text']
-            new_df.loc[i, 'embeddings'] = existing_df['embeddings']
+            continue
+        existing_df = find_df_for_text_from_df(mdx_content[curr_index])
+        if existing_df is not None:
+            new_df.loc[curr_index, 'text'] = existing_df['text']
+            new_df.loc[curr_index, 'embeddings'] = existing_df['embeddings']
+            curr_index+=1
             continue
         print("=========================")
         print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)) + " for chunk size:" + str(chunk_size))
         print()
         embeddings = openai.Embedding.create(
             engine='text-embedding-ada-002',
-            input=mdx_content_tokens[i]
+            input=mdx_content_token
         )['data'][0]['embedding']
 
-        new_df.loc[i, 'text'] = mdx_content[i]
-        new_df.loc[i, 'embeddings'] = embeddings
+        new_df.loc[curr_index, 'text'] = mdx_content[curr_index]
+        new_df.loc[curr_index, 'embeddings'] = embeddings
+        curr_index+=1
 
     new_df.to_csv('processed/' + str(chunk_size) + '-limit.csv', index=False)
     return new_df
