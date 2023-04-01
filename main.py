@@ -145,11 +145,11 @@ def get_embeddings(chunk_size):
 
     new_df = pd.DataFrame(columns=['text', 'embeddings'])
     curr_index = 0
-    for mdx_content_token in mdx_content_tokens:
-        existing_df = find_df_for_text_from_existing_embeddings(mdx_content[curr_index])
+    for i in range(len(mdx_content_tokens)):
+        existing_df = find_df_for_text_from_existing_embeddings(mdx_content[i])
         if existing_df is not None:
             continue
-        existing_df = find_df_for_text_from_df(mdx_content[curr_index])
+        existing_df = find_df_for_text_from_df(mdx_content[i])
         if existing_df is not None:
             new_df.loc[curr_index, 'text'] = existing_df['text']
             new_df.loc[curr_index, 'embeddings'] = existing_df['embeddings']
@@ -160,10 +160,10 @@ def get_embeddings(chunk_size):
         print()
         embeddings = openai.Embedding.create(
             engine='text-embedding-ada-002',
-            input=mdx_content_token
+            input=mdx_content_tokens[i]
         )['data'][0]['embedding']
 
-        new_df.loc[curr_index, 'text'] = mdx_content[curr_index]
+        new_df.loc[curr_index, 'text'] = mdx_content[i]
         new_df.loc[curr_index, 'embeddings'] = embeddings
         curr_index+=1
 

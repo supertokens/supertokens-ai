@@ -31,3 +31,4 @@ python main.py --update
 # Example questions it does not do well at even though the answers are in the docs:
 - What is the db schema for mysql?
 - Is there any to log out the user if user is idle for 10 mins without?
+- How to logout the user after 10 mins of inactivity?
