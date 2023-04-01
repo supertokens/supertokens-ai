@@ -1,36 +1,33 @@
-import discord
-from discord.ext import commands
-from dotenv import load_dotenv
-load_dotenv()
-import os
+import requests
 
-# Replace YOUR_TOKEN_HERE with your Discord bot token
-TOKEN = os.environ.get('DISCORD_TOKEN')
-GUILD_ID = "603466164219281420"
+url = "https://community.supertokens.com/api/threads"
+params = {
+    "channelId": "ae164b95-2204-44d4-9595-69c1cdaf17ad",
+    "accountId": "4e18cd5a-78d6-4be7-b53a-236bf4b40867"
+}
+headers = {
+    "Content-Type": "application/json"
+}
 
-# Define the intents you want to enable
-intents = discord.Intents.default()
-intents.members = True  # Enable the privileged members intent
-
-# Create a new Discord bot client
-bot = commands.Bot(command_prefix='!', intents=intents)
-
-@bot.event
-async def on_ready():
-    print('Logged in as {0.user}'.format(bot))
-
-    # Get the Discord guild object for the server you want to fetch threads from
-    guild = bot.get_guild(GUILD_ID)
-
-    # Get all the channels in the guild, including threads
-    channels = await guild.fetch_channels()
-
-    # Filter out only the threads from the channels list
-    threads = [channel for channel in channels if isinstance(channel, discord.Thread)]
-
-    # Print the name and ID of each thread
+prev_cursor = None
+while True:
+    if prev_cursor is not None:
+        params["cursor"] = prev_cursor
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+    threads = data["threads"]
     for thread in threads:
-        print(thread.name, thread.id)
-
-# Run the bot using your Discord bot token
-bot.run(TOKEN)
+        if len(thread["messages"]) <= 1:
+            # this is cause previously, we used to not create threads for messages.
+            continue
+        # Do something with each thread
+        for message in thread["messages"]:
+            if (message["author"] is None or message["body"] is None):
+                continue
+            # Do something with each message
+            print(message["author"]["username"] + ": " + message["body"])
+            print()
+        print("================= " + str(prev_cursor) + " =================")
+    if data["nextCursor"] is None or data["nextCursor"]["prev"] is None:
+        break
+    prev_cursor = data["nextCursor"]["prev"]
