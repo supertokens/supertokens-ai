@@ -12,23 +12,24 @@ root_dir = '/Users/rishabhpoddar/Desktop/supertokens/main-website/docs/v2'
 not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs', root_dir + '/auth-react_versioned_sidebars', root_dir + '/build', root_dir + '/change_me', root_dir + '/community', root_dir + '/node_modules', root_dir + '/nodejs', root_dir + '/nodejs_versioned_docs', root_dir + '/nodejs_versioned_sidebars', root_dir + '/website', root_dir + '/website_versioned_docs', root_dir + '/website_versioned_sidebars']
 only_allow = [root_dir + '/mfa', root_dir + '/session']
 consider_only_allow = True
-max_tokens = 500
-embeddings_location = 'processed/' + str(max_tokens) + '-limit.csv'
-output_max_tokes = 2048
+# max_tokens_per_chunk = 500
 
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
 
-if os.path.exists(embeddings_location):
-    df = pd.read_csv(embeddings_location)
-else:
-    df = pd.DataFrame(columns=['text', 'embeddings'])
+chunks = [500, 1024, 2048]
+df = {}
+for max_tokens_per_chunk in chunks:
+    embeddings_location = 'processed/' + str(max_tokens_per_chunk) + '-limit.csv'
+    df[max_tokens_per_chunk] = pd.DataFrame(columns=['text', 'embeddings'])
+    if os.path.exists(embeddings_location):
+        df[max_tokens_per_chunk] = pd.read_csv(embeddings_location)
 
 chunks_ignored = 0
 
 # Function to split the text into chunks of a maximum number of tokens
-def split_into_many(text, max_tokens = max_tokens):
+def split_into_many(text, max_tokens):
     if (len(tokenizer.encode(text)) < max_tokens):
         return [text]
     global chunks_ignored
@@ -66,14 +67,14 @@ def split_into_many(text, max_tokens = max_tokens):
 
     return chunks
 
-def find_df_for_text(text):
-    for i in range(len(df)):
-        if df.loc[i, 'text'] == text:
-            return df.loc[i]
+def find_df_for_text(text, chunks):
+    for i in range(len(df[chunks])):
+        if df[chunks].loc[i, 'text'] == text:
+            return df[chunks].loc[i]
     return None
 
 
-def convert_mdx_to_chunks(root_dir):
+def convert_mdx_to_chunks(root_dir, chunk_size):
     mdx_content = []
     for subdir, dirs, files in os.walk(root_dir):
         for file in files:
@@ -96,13 +97,13 @@ def convert_mdx_to_chunks(root_dir):
                 
                 with open(filepath, 'r') as f:
                     contents = f.read()
-                    if (len(tokenizer.encode(contents)) > max_tokens):
+                    if (len(tokenizer.encode(contents)) > chunk_size):
                         h2chunks = re.split(r'(?<=^##\s)', contents, flags=re.MULTILINE)
                         for chunk in h2chunks:
                             finalChunk_without_tags = re.sub(r'<[^>]+>', '', chunk)
                             finalChunk_without_tags = finalChunk_without_tags.replace("##", "")
                             finalChunk_without_tags = finalChunk_without_tags.replace(":::", "")
-                            chunk_within_token_limit = split_into_many(finalChunk_without_tags)
+                            chunk_within_token_limit = split_into_many(finalChunk_without_tags, chunk_size)
                             for i in chunk_within_token_limit:
                                 mdx_content.append(i)
                     else:
@@ -124,45 +125,61 @@ def decode_tokens(token_ids):
     # Return list of text tokens
     return text_tokens.split()
 
-mdx_content = convert_mdx_to_chunks(root_dir)
+def get_embeddings(chunk_size):
+    mdx_content = convert_mdx_to_chunks(root_dir, chunk_size)
 
-# convert the mdx_content list into a list tokens
-mdx_content_tokens = []
-for i in mdx_content:
-    mdx_content_tokens.append(to_token(i))
+    # convert the mdx_content list into a list tokens
+    mdx_content_tokens = []
+    for i in mdx_content:
+        mdx_content_tokens.append(to_token(i))
 
-new_df = pd.DataFrame(columns=['text', 'embeddings'])
-for i in range(len(mdx_content_tokens)):
-    existing_df = find_df_for_text(mdx_content[i])
-    if existing_df is not None:
-        new_df.loc[i, 'text'] = existing_df['text']
-        new_df.loc[i, 'embeddings'] = existing_df['embeddings']
-        continue
-    print("=========================")
-    print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)))
-    print()
-    embeddings = openai.Embedding.create(
-        engine='text-embedding-ada-002',
-        input=mdx_content_tokens[i]
-    )['data'][0]['embedding']
+    new_df = pd.DataFrame(columns=['text', 'embeddings'])
+    for i in range(len(mdx_content_tokens)):
+        existing_df = find_df_for_text(mdx_content[i], chunk_size)
+        if existing_df is not None:
+            new_df.loc[i, 'text'] = existing_df['text']
+            new_df.loc[i, 'embeddings'] = existing_df['embeddings']
+            continue
+        print("=========================")
+        print("Calculating embed for " + str(i) + " out of " + str(len(mdx_content_tokens)) + " for chunk size:" + str(chunk_size))
+        print()
+        embeddings = openai.Embedding.create(
+            engine='text-embedding-ada-002',
+            input=mdx_content_tokens[i]
+        )['data'][0]['embedding']
 
-    new_df.loc[i, 'text'] = mdx_content[i]
-    new_df.loc[i, 'embeddings'] = embeddings
+        new_df.loc[i, 'text'] = mdx_content[i]
+        new_df.loc[i, 'embeddings'] = embeddings
 
-new_df.to_csv(embeddings_location, index=False)
-
-
-new_df['embeddings'] = new_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+    new_df.to_csv('processed/' + str(chunk_size) + '-limit.csv', index=False)
+    new_df['embeddings'] = new_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+    return new_df
 
 # Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
-def get_top_4_embeddings(question_embeddings):
+def get_top_embeddings_up_to_limit(question_embeddings, limit=4):
+    new_df = pd.DataFrame(columns=['text', 'embeddings'])
+    for existing_embedding in existing_embeddings:
+        new_df = pd.concat([new_df, existing_embeddings[existing_embedding]])
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
-    context = []
+    context = ""
+    count = 0
+    already_seen = []
     for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-        if len(context) < 4:
-            context.append(row['text'])
+        if count < limit and row['text'] not in already_seen:
+            already_seen.append(row['text'])
+            to_append_text = row['text'] + "\n~~~\n";
+            context = context + to_append_text
+            count+=1
+
+        if count >= limit:
+            break
     
-    return "\n\n~~~\n\n".join(context)
+    return context;
+
+existing_embeddings = {}
+
+for chunk in chunks:
+    existing_embeddings[chunk] = get_embeddings(chunk)    
 
 while(True):
     # Ask the user for a question from the console
@@ -183,26 +200,27 @@ while(True):
         input=question_tokens
     )['data'][0]['embedding']
 
-    context = get_top_4_embeddings(question_embeddings)
+    context = get_top_embeddings_up_to_limit(question_embeddings)
 
-    prompt = f"You are an enthusiastic and friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\"\n\nContext: {context}\n\n~~~\n\nQuestion: {question}\nAnswer:"
+    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the markdown context below, and if the question can't be answered based on the context, say \"I don't know\". Please also provide code examples if it's very relevant.\n\nContext: {context}Question: {question}\nAnswer:"
     if debug:
         print("Prompt:")
         print(prompt)
 
     # Create a completions using the question and context
-    response = openai.Completion.create(
-        prompt=prompt,
+    response = openai.ChatCompletion.create(
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
         temperature=0,
-        max_tokens=output_max_tokes,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
         stop=None,
-        model="text-davinci-003",
+        model="gpt-3.5-turbo",
     )
     print("Answer: ")
-    print(response["choices"][0]["text"].strip())
+    print(response["choices"][0]["message"]["content"].strip())
     print()
     print()
 
