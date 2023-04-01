@@ -32,3 +32,8 @@ python main.py --update
 - What is the db schema for mysql?
 - Is there any to log out the user if user is idle for 10 mins without?
 - How to logout the user after 10 mins of inactivity?
+
+# Improvements idea:
+- When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes
+- Instead of adding context, fine tune a new model instead.
+- Add real time learning: After every answer, the bot can ask for positive or negative feedback. If positive, the bot can save the question and answer as new embeddings in the knowledge base. If negative feedback, the bot can ask for the correct answer and save that as new embeddings.
