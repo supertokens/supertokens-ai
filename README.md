@@ -37,9 +37,11 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 
 # Example questions it does not do well at even though the answers are in the docs:
 - What is the db schema for mysql?
+- Hi, how to add new OAuth methods to supertokens ? like Steam or Epic Games ?
 
 # Improvements idea:
 - When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes
 - Instead of adding context, fine tune a new model instead.
 - Add real time learning: After every answer, the bot can ask for positive or negative feedback. If positive, the bot can save the question and answer as new embeddings in the knowledge base. If negative feedback, the bot can ask for the correct answer and save that as new embeddings.
 - When showing the answer, also show the link to the documentation page where the answer is found.
+- Allow for multiline input.
