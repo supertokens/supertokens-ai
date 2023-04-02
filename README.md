@@ -38,6 +38,7 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 # Example questions it does not do well at even though the answers are in the docs:
 - Hi, how to add new OAuth methods to supertokens ? like Steam or Epic Games ? -> gives a lot of information related to being an oauth provider, which is unrelated to the question (but is confused with oauth client vs provider).
 - https://discord.com/channels/603466164219281420/644849840475602944/1092010413949997127 -> the issue here is that even though the thread contains the answer, chatGPT doesn't give the answer, instead it continues to talk about the last message in the thread which has little to do with the original question.
+- What Server from those 3 are in the best location for germany -> this gives info about the context like "according to the context, the conversation between rp and <user>.. but it's not clear which is the best".
 
 # Improvements idea:
 - When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes

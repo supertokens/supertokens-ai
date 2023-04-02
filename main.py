@@ -7,6 +7,7 @@ import pandas as pd
 from openai.embeddings_utils import distances_from_embeddings
 import numpy as np
 import sys
+from termcolor import colored
 load_dotenv()
 
 root_dir = os.environ.get('DOCUMENTATION_PATH')
@@ -15,6 +16,7 @@ only_allow = [root_dir + '/mfa', root_dir + '/session', root_dir + '/emailpasswo
 consider_only_allow = False
 # max_tokens_per_chunk = 500
 
+print(colored("Loading knowledge base. This will take a few seconds...", "blue"))
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
@@ -216,7 +218,7 @@ discord_df = {} # free up memory
 
 while(True):
     # Ask the user for a question from the console
-    print("Enter a question (or type exit) and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ")
+    print(colored("Enter a new question (or type exit) and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ", "cyan"))
     contents = []
     while True:
         try:
@@ -232,7 +234,7 @@ while(True):
 
     print()
     print()
-    print("Processing...")
+    print(colored("Processing...", "cyan"))
     print()
     
     debug = False
@@ -267,6 +269,6 @@ while(True):
         model="gpt-3.5-turbo",
     )
     print("Answer: ")
-    print(response["choices"][0]["message"]["content"].strip())
+    print(colored(response["choices"][0]["message"]["content"].strip(), "green"))
     print()
     print()
