@@ -36,7 +36,6 @@ Enter a question (or type exit): DEBUG what is apiGatewayPath in appInfo?
 The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 
 # Example questions it does not do well at even though the answers are in the docs:
-- What is the db schema for mysql?
 - Hi, how to add new OAuth methods to supertokens ? like Steam or Epic Games ? -> gives a lot of information related to being an oauth provider, which is unrelated to the question (but is confused with oauth client vs provider).
 - https://discord.com/channels/603466164219281420/644849840475602944/1092010413949997127 -> the issue here is that even though the thread contains the answer, chatGPT doesn't give the answer, instead it continues to talk about the last message in the thread which has little to do with the original question.
 
@@ -47,3 +46,4 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 - When showing the answer, also show the link to the documentation page where the answer is found.
 - Add intercom chat and github issues as a source of knowledge as well.
 - If an existing discord thread is updated after it has already been indexed, then the next time we update the knowledge base, it doesn't pick it up from there.
+- Add documentation links to answers
