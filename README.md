@@ -38,6 +38,7 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 # Example questions it does not do well at even though the answers are in the docs:
 - What is the db schema for mysql?
 - Hi, how to add new OAuth methods to supertokens ? like Steam or Epic Games ?
+- https://discord.com/channels/603466164219281420/644849840475602944/1092010413949997127 -> the issue here is that even though the thread contains the answer, chatGPT doesn't give the answer, instead it continues to talk about the last message in the thread which has little to do with the original question.
 
 # Improvements idea:
 - When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes
