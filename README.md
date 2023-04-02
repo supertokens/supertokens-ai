@@ -46,3 +46,4 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 - Add real time learning: After every answer, the bot can ask for positive or negative feedback. If positive, the bot can save the question and answer as new embeddings in the knowledge base. If negative feedback, the bot can ask for the correct answer and save that as new embeddings.
 - When showing the answer, also show the link to the documentation page where the answer is found.
 - Add intercom chat and github issues as a source of knowledge as well.
+- If an existing discord thread is updated after it has already been indexed, then the next time we update the knowledge base, it doesn't pick it up from there.
