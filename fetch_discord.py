@@ -47,6 +47,11 @@ print("fetching support-question channel")
 fetch_from_channel("ae164b95-2204-44d4-9595-69c1cdaf17ad")
 print()
 
+# bot-training channel
+print("fetching bot-training channel")
+fetch_from_channel("8b2adb2b-afbc-4906-849c-f8d0109d4019")
+print()
+
 # save threads as a json file
 with open("processed/discord_threads.json", "w") as f:
     f.write(json.dumps(threads, indent=4))
