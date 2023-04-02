@@ -271,4 +271,5 @@ while(True):
     print("Answer: ")
     print(colored(response["choices"][0]["message"]["content"].strip(), "green"))
     print()
+    print(colored("WARNING: Code snippets / answer suggested by the bot may be wrong. For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
     print()
