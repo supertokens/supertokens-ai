@@ -4,6 +4,11 @@ This project allows a user to ask SuperTokens related questions to the bot. It a
 
 ## Setup project
 
+### Step 1: Setup env var
+Open the .env file and set:
+- `OPEN_AI_KEY`: Your OpenAI API key
+
+### Step 2: Install dependencies and setup knowledge base
 ```bash
 pip install -r requirements.txt
 python split_or_union_data_files.py
