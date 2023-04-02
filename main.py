@@ -216,10 +216,24 @@ discord_df = {} # free up memory
 
 while(True):
     # Ask the user for a question from the console
-    question = input("Enter a question (or type exit): ")
+    print("Enter a question (or type exit) and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ")
+    contents = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        contents.append(line)
+    
+    question = "\n".join(contents)
 
     if question == "exit":
         break
+
+    print()
+    print()
+    print("Processing...")
+    print()
     
     debug = False
     if question.startswith("DEBUG "):
