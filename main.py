@@ -234,7 +234,7 @@ while(True):
 
     print()
     print()
-    print(colored("Processing...", "cyan"))
+    print(colored("Thinking...", "cyan"))
     print()
     
     debug = False
