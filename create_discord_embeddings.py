@@ -19,7 +19,7 @@ if os.path.exists('processed/discord_threads.csv'):
     df = pd.read_csv('processed/discord_threads.csv')
 
 
-test_df = pd.DataFrame(columns=['question', 'answer', 'embeddings'])
+test_df = pd.DataFrame(columns=['question', 'answer', 'embeddings', 'id'])
 if os.path.exists('processed/test_cases.csv'):
     test_df = pd.read_csv('processed/test_cases.csv')
 
@@ -89,6 +89,7 @@ for curr_thread in threads:
         test_df.loc[curr_index, 'question'] = question
         test_df.loc[curr_index, 'answer'] = answer
         test_df.loc[curr_index, 'embeddings'] = embeddings
+        test_df.loc[curr_index, 'id'] = curr_thread['id']
 
 new_df.to_csv('processed/discord_threads.csv', index=False)
 test_df.to_csv('processed/test_cases.csv', index=False)
