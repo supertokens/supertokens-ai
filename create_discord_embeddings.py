@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import tiktoken
 load_dotenv()
 
+test_case_string = "st-bot-test-case"
+
 max_token_limit = 2048
 
 tokenizer = tiktoken.get_encoding("cl100k_base")
@@ -15,6 +17,11 @@ openai.api_key = os.environ.get('OPEN_AI_KEY')
 df = pd.DataFrame(columns=['text', 'embeddings', 'id'])
 if os.path.exists('processed/discord_threads.csv'):
     df = pd.read_csv('processed/discord_threads.csv')
+
+
+test_df = pd.DataFrame(columns=['question', 'answer', 'embeddings'])
+if os.path.exists('processed/test_cases.csv'):
+    test_df = pd.read_csv('processed/test_cases.csv')
 
 with open("processed/discord_threads.json", "r") as f:
     threads = json.loads(f.read())
@@ -38,8 +45,13 @@ for curr_thread in threads:
         continue
     
     message = ""
+    is_test_case = False
     for curr_message in curr_thread['messages']:
+        if test_case_string in curr_message['body']:
+            is_test_case = True
+            break
         message += curr_message["author"]["username"] + ": " + curr_message['body'] + "~C_END~\n\n"
+    
 
     tokens = tokenizer.encode(message)
     if (len(tokens) > max_token_limit):
@@ -56,4 +68,27 @@ for curr_thread in threads:
     new_df.loc[count, 'embeddings'] = embeddings
     new_df.loc[count, 'id'] = curr_thread['id']
 
+    if is_test_case:
+        question = curr_thread['messages'][0]["body"]
+        answer = ""
+        for i in range(len(curr_thread['messages'])):
+            if i == 0:
+                continue
+            if test_case_string in curr_thread['messages'][i]['body']:
+                break
+            answer += curr_thread['messages'][i]['body'] + "\n"
+        
+        tokens = tokenizer.encode(answer)
+
+        print("Fetching embeddings for test case.")
+        embeddings = openai.Embedding.create(
+            engine='text-embedding-ada-002',
+            input=tokens
+        )['data'][0]['embedding']
+        curr_index = len(test_df)
+        test_df.loc[curr_index, 'question'] = question
+        test_df.loc[curr_index, 'answer'] = answer
+        test_df.loc[curr_index, 'embeddings'] = embeddings
+
 new_df.to_csv('processed/discord_threads.csv', index=False)
+test_df.to_csv('processed/test_cases.csv', index=False)
