@@ -72,3 +72,4 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 - Add documentation links to answers.
 - When it's suggesting code snippets, run it through the docs type checking and keep iterating on it until the type errors are fixed.
 - We can create a testing suit which has several questions and answers (source of truth), and then test out different forms of embedding docs by making it generate answers for those questions and then compare the answers with the source of truth. Comparison can be done getting the embeddings of the truthy and generated answers and checking how far away they are.
+- Dynamically generate context size based on max_token and length of question (max_token + prompt = max context size).
