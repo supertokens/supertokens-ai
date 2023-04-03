@@ -1,3 +1,8 @@
+from termcolor import colored
+# this is there at the start, above all the other imports cause if we put it 
+# below, for fist time users, it will take a long time before this message is shown.
+print(colored("Loading knowledge base. This will take a few seconds...", "blue"))
+
 import openai
 import re
 import os
@@ -7,7 +12,6 @@ import pandas as pd
 from openai.embeddings_utils import distances_from_embeddings
 import numpy as np
 import sys
-from termcolor import colored
 load_dotenv()
 
 root_dir = os.environ.get('DOCUMENTATION_PATH') or  ""
@@ -15,8 +19,6 @@ not_allowed = [root_dir + '/auth-react', root_dir + '/auth-react_versioned_docs'
 only_allow = [root_dir + '/mfa', root_dir + '/session', root_dir + '/emailpassword', root_dir + '/passwordless', root_dir + '/thirdparty']
 consider_only_allow = False
 # max_tokens_per_chunk = 500
-
-print(colored("Loading knowledge base. This will take a few seconds...", "blue"))
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
 tokenizer = tiktoken.get_encoding("cl100k_base")
@@ -253,8 +255,8 @@ while(True):
 
     prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\". The context has markdown snippets as well as chat conversations. Each context example is separated by \"~~~\". Please answer in depth, assuming that the user is new to SuperTokens, and provide code examples if relevant. Also assume that the person reading your answer cannot see the provided context, so do not refer to it in your answer.\nContext: \"\"\"{context}\"\"\"\nQuestion: \"\"\"{question}\"\"\"\nAnswer:"
     if debug:
-        print("Prompt:")
-        print(prompt)
+        print(colored("Prompt:", "yellow"))
+        print(colored(prompt, "yellow"))
 
     # Create a completions using the question and context
     response = openai.ChatCompletion.create(
