@@ -253,7 +253,7 @@ while(True):
 
     context = get_top_embeddings_up_to_limit(question_embeddings)
 
-    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\". The context has markdown snippets as well as chat conversations. Each context example is separated by \"~~~\". Please answer in depth, assuming that the user is new to SuperTokens, and provide code examples if relevant. Also assume that the person reading your answer cannot see the provided context, so do not refer to it in your answer.\nContext: \"\"\"{context}\"\"\"\nQuestion: \"\"\"{question}\"\"\"\nAnswer:"
+    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". The context has markdown snippets as well as chat conversations. Each context example is separated by \"~~~\". Please answer in depth, assuming that the user is new to SuperTokens. Do not refer to the provided context in your answer in any way. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets.\nContext: \"\"\"{context}\"\"\"\nQuestion: \"\"\"{question}\"\"\"\nAnswer:"
     if debug:
         print(colored("Prompt:", "yellow"))
         print(colored(prompt, "yellow"))
