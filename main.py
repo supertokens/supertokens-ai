@@ -298,7 +298,7 @@ while(True):
         messages.append({"role": "user", "content": question})
         messages.append({"role": "system", "content": response["choices"][0]["message"]["content"].strip()})
         messages.append({"role": "user", "content": more_context})
-        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above such that the next answer is better. Do not loose out on any information.\n Rephrased question:"})
+        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above such that the next answer is better. Retain any code snippets provided by me and do not loose out on any information.\n Rephrased question:"})
         response = openai.ChatCompletion.create(
             messages=messages,
             temperature=0,
