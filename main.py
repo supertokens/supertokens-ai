@@ -177,22 +177,19 @@ def get_embeddings(chunk_size):
 # Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
 def get_top_embeddings_up_to_limit(question_embeddings, context_limit=4, token_limit=3000):
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
-    context = ""
-    count = 0
+    context = []
+    curr_token_count = 0
     already_seen = []
     for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-        if count < context_limit and row['text'] not in already_seen:
-            already_seen.append(row['text'])
-            to_append_text = row['text'] + "\n~~~\n";
-            if len(tokenizer.encode(context + to_append_text)) > token_limit:
-                break
-            context = context + to_append_text
-            count+=1
-
-        if count >= context_limit:
+        if len(context) >= context_limit:
             break
+        if row['text'] not in already_seen:
+            already_seen.append(row['text'])
+            if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
+                break
+            context.append(row['text'])
     
-    return context;
+    return context
 
 existing_embeddings = {}
 
@@ -253,16 +250,25 @@ while(True):
 
     context = get_top_embeddings_up_to_limit(question_embeddings)
 
-    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". The context has markdown snippets as well as chat conversations. Each context example is separated by \"~~~\". You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets.\nContext: \"\"\"{context}\"\"\"\nQuestion: \"\"\"{question}\"\"\"\nAnswer:"
+    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
+
+    messages = [{"role": "user", "content": prompt}]
+    for i in range(len(context)):
+        messages.append({"role": "user", "content": "New Context:\n" + context[i]})
+    messages.append({"role": "user", "content": "Question:\n" + question})
+    messages.append({"role": "user", "content": "Answer:"})
     if debug:
-        print(colored("Prompt:", "yellow"))
-        print(colored(prompt, "yellow"))
+        for m in messages:
+            print()
+            print()
+            print(colored("=====================================", "red"))
+            print(colored(m["content"], "yellow"))
+            print()
+            print()
 
     # Create a completions using the question and context
     response = openai.ChatCompletion.create(
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
+        messages=messages,
         temperature=0,
         top_p=1,
         frequency_penalty=0,
