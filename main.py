@@ -215,9 +215,7 @@ discord_df['embeddings'] = discord_df['embeddings'].apply(lambda x: eval(str(x))
 new_df = pd.concat([new_df, discord_df])
 discord_df = {} # free up memory
 
-while(True):
-    # Ask the user for a question from the console
-    print(colored("Enter a new question (or type exit) and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ", "cyan"))
+def get_multi_line_input():
     contents = []
     while True:
         try:
@@ -226,10 +224,15 @@ while(True):
             break
         contents.append(line)
     
-    question = "\n".join(contents)
+    inp = "\n".join(contents)
+    if inp == "exit":
+        quit()
+    return inp
 
-    if question == "exit":
-        break
+while(True):
+    # Ask the user for a question from the console
+    print(colored("Enter a new question (or type \"exit\") and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ", "cyan"))
+    question = get_multi_line_input()
 
     print()
     print()
@@ -248,36 +251,76 @@ while(True):
         input=question_tokens
     )['data'][0]['embedding']
 
-    context = get_top_embeddings_up_to_limit(question_embeddings)
+    more_context = ""
 
-    prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
+    while(True):
+        context = get_top_embeddings_up_to_limit(question_embeddings)
 
-    messages = [{"role": "user", "content": prompt}]
-    for i in range(len(context)):
-        messages.append({"role": "user", "content": "New Context:\n" + context[i]})
-    messages.append({"role": "user", "content": "Question:\n" + question})
-    messages.append({"role": "user", "content": "Answer:"})
-    if debug:
-        for m in messages:
-            print()
-            print()
-            print(colored("=====================================", "red"))
-            print(colored(m["content"], "yellow"))
-            print()
-            print()
+        prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
 
-    # Create a completions using the question and context
-    response = openai.ChatCompletion.create(
-        messages=messages,
-        temperature=0,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        stop=None,
-        model="gpt-3.5-turbo",
-    )
-    print("Answer: ")
-    print(colored(response["choices"][0]["message"]["content"].strip(), "green"))
-    print()
-    print(colored("WARNING: Code snippets / answer suggested by the bot may be wrong. For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
-    print()
+        messages = [{"role": "user", "content": prompt}]
+        for i in range(len(context)):
+            messages.append({"role": "user", "content": "New Context:\n" + context[i]})
+        messages.append({"role": "user", "content": "Question:\n" + question})
+        messages.append({"role": "user", "content": "Answer:"})
+        if debug:
+            for m in messages:
+                print()
+                print()
+                print(colored("=====================================", "red"))
+                print(colored(m["content"], "yellow"))
+                print()
+                print()
+
+        # Create a completions using the question and context
+        response = openai.ChatCompletion.create(
+            messages=messages,
+            temperature=0,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            model="gpt-3.5-turbo",
+        )
+        print("Answer: ")
+        print(colored(response["choices"][0]["message"]["content"].strip(), "green"))
+        print()
+        print(colored("WARNING: Code snippets / answer suggested by the bot may be wrong. For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
+        print()
+
+        print(colored("Your reply (type \"new\" for a new question, or \"exit\"): ", "cyan"))
+        more_context = get_multi_line_input()
+        if more_context == "new":
+            print()
+            break
+
+        # prompt = f"You are a question / answer agent who is an expert at SuperTokens and authentication. The conversation below contains the user's original question, and an answer provided by you previously. But the user is not happy with the answer, and has provided some more context. Based on all of this, please provide a rephrased version of the user's question which will help you answer the question better next time."
+
+        messages = []
+        messages.append({"role": "user", "content": question})
+        messages.append({"role": "system", "content": response["choices"][0]["message"]["content"].strip()})
+        messages.append({"role": "user", "content": more_context})
+        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above such that the next answer is better. Do not loose out on any information.\n Rephrased question:"})
+        response = openai.ChatCompletion.create(
+            messages=messages,
+            temperature=0,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            model="gpt-3.5-turbo",
+        )
+        if debug:
+            print()
+            print()
+            print(colored("============REPHRASED QUESTION===========", "red"))
+            print(colored(response["choices"][0]["message"]["content"].strip(), "yellow"))
+            print()
+            print()
+        question = response["choices"][0]["message"]["content"].strip()
+        question_tokens = to_token(question)
+        question_embeddings = openai.Embedding.create(
+            engine='text-embedding-ada-002',
+            input=question_tokens
+        )['data'][0]['embedding']
+    
