@@ -294,8 +294,6 @@ while(True):
             print()
             break
 
-        # prompt = f"You are a question / answer agent who is an expert at SuperTokens and authentication. The conversation below contains the user's original question, and an answer provided by you previously. But the user is not happy with the answer, and has provided some more context. Based on all of this, please provide a rephrased version of the user's question which will help you answer the question better next time."
-
         messages = []
         messages.append({"role": "user", "content": question})
         messages.append({"role": "system", "content": response["choices"][0]["message"]["content"].strip()})
