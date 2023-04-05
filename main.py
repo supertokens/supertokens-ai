@@ -203,8 +203,8 @@ for chunk in chunks:
     existing_embeddings[chunk]['embeddings'] = existing_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
 
 new_df = pd.DataFrame(columns=['text', 'embeddings'])
-for existing_embedding in existing_embeddings:
-    new_df = pd.concat([new_df, existing_embeddings[existing_embedding]])
+for chunk in chunks:
+    new_df = pd.concat([new_df, existing_embeddings[chunk]], ignore_index=True)
 
 existing_embeddings = {} # free up memory
 
@@ -212,7 +212,7 @@ existing_embeddings = {} # free up memory
 discord_df = pd.read_csv('processed/discord_threads.csv')
 discord_df['embeddings'] = discord_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
 
-new_df = pd.concat([new_df, discord_df])
+new_df = pd.concat([new_df, discord_df], ignore_index=True)
 discord_df = {} # free up memory
 
 def get_multi_line_input():
@@ -293,6 +293,18 @@ while(True):
         if more_context == "new":
             print()
             break
+
+        # enriching the existing context with the previous question / answer just was a bad idea cause it just added it to the new context for the new question..
+        # enrich_embeddings_text = "Question: " + question + "\n=============\n" + "Answer: " + response["choices"][0]["message"]["content"].strip()
+        # enrich_embeddings_vector = openai.Embedding.create(
+        #     engine='text-embedding-ada-002',
+        #     input=to_token(enrich_embeddings_text)
+        # )['data'][0]['embedding']
+
+        # new_df = pd.concat([new_df, pd.DataFrame({
+        #     'text': enrich_embeddings_text,
+        #     'embeddings': [np.array(enrich_embeddings_vector)]
+        # })], ignore_index=True)
 
         messages = []
         messages.append({"role": "user", "content": question})
