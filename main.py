@@ -174,22 +174,52 @@ def get_embeddings(chunk_size):
     new_df.to_csv('processed/' + str(chunk_size) + '-limit.csv', index=False)
     return new_df
 
-# Define a function which returns the top 4 embeddings from the new_df dataframe that are closest to question_embeddings based on cosine similarity
-def get_top_embeddings_up_to_limit(question_embeddings, context_limit=4, token_limit=3000):
+def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_limit=4, token_limit=2500):
+    question_embeddings = openai.Embedding.create(
+        engine='text-embedding-ada-002',
+        input=to_token(question)
+    )['data'][0]['embedding']
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
-    context = []
-    curr_token_count = 0
-    already_seen = []
-    for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-        if len(context) >= context_limit:
-            break
-        if row['text'] not in already_seen:
-            already_seen.append(row['text'])
-            if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
+
+    if right_track:
+        context = []
+        curr_token_count = 0
+        already_seen = []
+        for i, row in new_df.sort_values('distances', ascending=True).iterrows():
+            if len(context) >= context_limit:
                 break
-            context.append(row['text'])
-    
-    return context
+            if row['text'] not in already_seen:
+                already_seen.append(row['text'])
+                if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
+                    continue
+                curr_token_count += len(tokenizer.encode(row['text']))
+                context.append(row['text'])
+        return context
+    else:
+        prev_answer_embeddings = openai.Embedding.create(
+            engine='text-embedding-ada-002',
+            input=to_token(prev_answer)
+        )['data'][0]['embedding']
+        context = []
+        curr_token_count = 0
+        already_seen = []
+        number_skipped_because_of_answer_distance = 0
+        for i, row in new_df.sort_values('distances', ascending=True).iterrows():
+            if len(context) >= context_limit or number_skipped_because_of_answer_distance > context_limit*2:
+                break
+            if row['text'] not in already_seen:
+                
+                if distances_from_embeddings(prev_answer_embeddings, [row['embeddings']], distance_metric='cosine')[0] - row['distances'] < 0:
+                    # this means that the current row is further away from the previous answer, so we skip this one.
+                    number_skipped_because_of_answer_distance += 1
+                    continue
+
+                already_seen.append(row['text'])
+                if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
+                    continue
+                curr_token_count += len(tokenizer.encode(row['text']))
+                context.append(row['text'])
+        return context
 
 existing_embeddings = {}
 
@@ -244,17 +274,17 @@ while(True):
         question = question.replace("DEBUG ", "")
         debug = True
 
-    question_tokens = to_token(question)
-
-    question_embeddings = openai.Embedding.create(
-        engine='text-embedding-ada-002',
-        input=question_tokens
-    )['data'][0]['embedding']
-
     more_context = ""
 
+    right_track = True
+    prev_answer = ""
     while(True):
-        context = get_top_embeddings_up_to_limit(question_embeddings)
+        context = get_top_embeddings_up_to_limit(question, prev_answer, right_track)
+
+        if len(context) == 0:
+            print("Answer: ")
+            print(colored("I don't know.", "green"))
+            break
 
         prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
 
@@ -282,8 +312,9 @@ while(True):
             stop=None,
             model="gpt-3.5-turbo",
         )
+        prev_answer = response["choices"][0]["message"]["content"].strip()
         print("Answer: ")
-        print(colored(response["choices"][0]["message"]["content"].strip(), "green"))
+        print(colored(prev_answer, "green"))
         print()
         print(colored("WARNING: Code snippets / answer suggested by the bot may be wrong. For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
         print()
@@ -295,7 +326,7 @@ while(True):
             break
 
         # enriching the existing context with the previous question / answer just was a bad idea cause it just added it to the new context for the new question..
-        # enrich_embeddings_text = "Question: " + question + "\n=============\n" + "Answer: " + response["choices"][0]["message"]["content"].strip()
+        # enrich_embeddings_text = "Question: " + question + "\n=============\n" + "Answer: " + prev_answer
         # enrich_embeddings_vector = openai.Embedding.create(
         #     engine='text-embedding-ada-002',
         #     input=to_token(enrich_embeddings_text)
@@ -306,11 +337,15 @@ while(True):
         #     'embeddings': [np.array(enrich_embeddings_vector)]
         # })], ignore_index=True)
 
+        print()
+        print(colored("Thinking...", "cyan"))
+        print()
+
         messages = []
         messages.append({"role": "user", "content": question})
-        messages.append({"role": "system", "content": response["choices"][0]["message"]["content"].strip()})
+        messages.append({"role": "system", "content": prev_answer})
         messages.append({"role": "user", "content": more_context})
-        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above such that the next answer is better. Retain any code snippets provided by me and do not loose out on any information.\n Rephrased question:"})
+        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above retaining any code snippets provided by me and do not loose out on any information.\n\nBased on my reply to your answer, do you think you are on the right track to answering the question?. If you think that you are on the right track, say \"yes\", else say \"no\".\n\nExample output format is:\n\"\"\"Rephrased question: ....\n\nRight track: yes\"\"\"\n\nRephrased question:"})
         response = openai.ChatCompletion.create(
             messages=messages,
             temperature=0,
@@ -327,10 +362,11 @@ while(True):
             print(colored(response["choices"][0]["message"]["content"].strip(), "yellow"))
             print()
             print()
-        question = response["choices"][0]["message"]["content"].strip()
-        question_tokens = to_token(question)
-        question_embeddings = openai.Embedding.create(
-            engine='text-embedding-ada-002',
-            input=question_tokens
-        )['data'][0]['embedding']
+        new_resp = response["choices"][0]["message"]["content"].strip()
+        if "\nRight track:" in new_resp:
+            question = new_resp.split("\nRight track:")[0].strip()
+            right_track = new_resp.split("\nRight track:")[1].strip().lower() == "yes" or new_resp.split("\nRight track:")[1].strip().lower() == "yes."
+        else:
+            right_track = True
+            question = response["choices"][0]["message"]["content"].strip()
     
