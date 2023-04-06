@@ -205,7 +205,7 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
         already_seen = []
         number_skipped_because_of_answer_distance = 0
         for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-            if len(context) >= context_limit or number_skipped_because_of_answer_distance > context_limit*2:
+            if len(context) >= context_limit or number_skipped_because_of_answer_distance > context_limit:
                 break
             if row['text'] not in already_seen:
                 
