@@ -65,8 +65,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - Hi how can i get the session id after login ? -> results in it calling createNewSession, and then when prompted after by "No. I mean when the user is logged in, and they make a request from the frontend with a session. How do i get the session id from that request?" -> it returns calling getSession, but with auth-react SDK
 
 # Improvements idea:
-- When creating the context, do it based on the recipe that the user is using. So only search and add the context based on the user's recipes
-- Instead of adding context, fine tune a new model instead.
+- Instead of adding context, fine tune a new model.
 - Add real time learning: After every answer, the bot can ask for positive or negative feedback. If positive, the bot can save the question and answer as new embeddings in the knowledge base. If negative feedback, the bot can ask for the correct answer and save that as new embeddings.
 - When showing the answer, also show the link to the documentation page where the answer is found.
 - Add intercom chat and github issues as a source of knowledge as well.
@@ -75,3 +74,6 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - When it's suggesting code snippets, run it through the docs type checking and keep iterating on it until the type errors are fixed.
 - We can create a testing suit which has several questions and answers (source of truth), and then test out different forms of embedding docs by making it generate answers for those questions and then compare the answers with the source of truth. Comparison can be done getting the embeddings of the truthy and generated answers and checking how far away they are.
 - Dynamically generate context size based on max_token and length of question (max_token + prompt = max context size).
+- Ask the user for which recipe, sdks, custom or pre built UI they are using, and add those to the context for each question to the bot.
+- When going through the docs and making it into chunks, break each page into several pages such that each version of the page is specifically for a language / framework. And then save those embeddings for that lang / framework. Then ask the user which lang / sdks / frameworks / recipe they use and only use the relevant docs embeddings.
+- Save the question / answer + on right track feedback into it's own file, and then when a question is asked, fetch the answer + feedback that is closest to the question from the file and use those to filter out bad context right from the very start.
