@@ -281,10 +281,11 @@ while(True):
 
     right_track = True
     prev_answer = ""
+    number_of_bad_grade_iterations = 0
     while(True):
         context = get_top_embeddings_up_to_limit(question, prev_answer, right_track)
 
-        if len(context) == 0:
+        if len(context) == 0 or number_of_bad_grade_iterations > 5:
             print("Answer: ")
             print(colored("I don't know. Please provide more context to the question.", "green"))
             break
@@ -349,6 +350,7 @@ while(True):
         # it's very lenient at giving scores.. so if it's <= 7, we will try and get more context
         if score != -1 and score <= 7:
             right_track = False
+            number_of_bad_grade_iterations += 1
             print()
             print(colored("Thinking some more...", "cyan"))
             print()
