@@ -176,6 +176,21 @@ def get_embeddings(chunk_size):
 
 already_seen_context_for_question = {}
 
+def is_context_relevant_according_to_gpt(context, question):
+    prompt = f"You are an expert at SuperTokens and authentication. Is the provided context answering the question below? Answer only in \"yes\" or \"no\", and not a word more.\n\nQuestion: \"\"\"{question}\"\"\"\n\nContext: \"\"\"{context}\"\"\"\n\nAnswer (yes/no):"
+    messages = [{"role": "user", "content": prompt}]
+    response = openai.ChatCompletion.create(
+            messages=messages,
+            temperature=0,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            model="gpt-3.5-turbo",
+        )
+    response = response["choices"][0]["message"]["content"].strip()
+    return response.lower() != "no" and response.lower() != "no."
+
 def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_limit=4, token_limit=2500):
     if question not in already_seen_context_for_question:
         already_seen_context_for_question[question] = []
@@ -185,13 +200,19 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
     )['data'][0]['embedding']
     new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values, distance_metric='cosine')
 
+    number_skipped_because_of_bad_context = 0
     if right_track:
         context = []
         curr_token_count = 0
         for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-            if len(context) >= context_limit:
+            if len(context) >= context_limit or number_skipped_because_of_bad_context >= context_limit:
                 break
             if row['text'] not in already_seen_context_for_question[question]:
+
+                if not is_context_relevant_according_to_gpt(row['text'], question):
+                    number_skipped_because_of_bad_context += 1
+                    continue
+
                 already_seen_context_for_question[question].append(row['text'])
                 if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
                     continue
@@ -207,9 +228,13 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
         curr_token_count = 0
         number_skipped_because_of_answer_distance = 0
         for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-            if len(context) >= context_limit or number_skipped_because_of_answer_distance > context_limit:
+            if len(context) >= context_limit or number_skipped_because_of_answer_distance >= context_limit or number_skipped_because_of_bad_context >= context_limit:
                 break
             if row['text'] not in already_seen_context_for_question[question]:
+
+                if not is_context_relevant_according_to_gpt(row['text'], question):
+                    number_skipped_because_of_bad_context += 1
+                    continue
                 
                 if distances_from_embeddings(prev_answer_embeddings, [row['embeddings']], distance_metric='cosine')[0] - row['distances'] < 0:
                     # this means that the current row is further away from the previous answer, so we skip this one.
@@ -287,7 +312,7 @@ while(True):
 
         if len(context) == 0 or number_of_bad_grade_iterations > 5:
             print("Answer: ")
-            print(colored("I don't know. Please provide more context to the question.", "green"))
+            print(colored("I don't know. Please reach out to the SuperTokens team on Discord: https://supertokens.com/discord", "green"))
             break
 
         prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
@@ -378,7 +403,7 @@ while(True):
         messages.append({"role": "user", "content": question})
         messages.append({"role": "system", "content": prev_answer})
         messages.append({"role": "user", "content": more_context})
-        messages.append({"role": "user", "content": "Rephrase my question based on the conversation above retaining any code snippets provided by me and do not loose out on any information.\n\nBased on my reply to your answer, do you think you are on the right track to answering the question?. If you think that you are on the right track, say \"yes\", else say \"no\".\n\nExample output format is:\n\"\"\"Rephrased question: ....\n\nRight track: yes\"\"\"\n\nRephrased question:"})
+        messages.append({"role": "user", "content": "Rephrase my question (pretending you are me) based on the conversation above retaining any code snippets provided by me and do not loose out on any information.\n\nBased on my reply to your answer, do you think you are on the right track to answering the question?. If you think that you are on the right track, say \"yes\", else say \"no\".\n\nExample output format is:\n\"\"\"Rephrased question: ....\n\nRight track: yes\"\"\"\n\nRephrased question:"})
         response = openai.ChatCompletion.create(
             messages=messages,
             temperature=0,

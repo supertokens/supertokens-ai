@@ -63,6 +63,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - When should i use supertokens' metadata recipe vs storing the metadata in my own db?
 - Hi how can i get the session id after login ? -> results in it calling createNewSession, and then when prompted after by "No. I mean when the user is logged in, and they make a request from the frontend with a session. How do i get the session id from that request?" -> it returns calling getSession, but with auth-react SDK
 - is there any API for healthchecks in supertokens core? -> instead of returning i don't know, it returns with /health
+- How can I send a refresh token to the server when I receive a 401 error with the message "try refresh token"? Can you provide some code snippets to help me understand how to do this? -> this gives a full code snippet instead of saying that our frontend interceptors do the refreshing.
 
 # Improvements idea:
 - Instead of adding context, fine tune a new model.
