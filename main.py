@@ -174,7 +174,11 @@ def get_embeddings(chunk_size):
     new_df.to_csv('processed/' + str(chunk_size) + '-limit.csv', index=False)
     return new_df
 
+already_seen_context_for_question = {}
+
 def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_limit=4, token_limit=2500):
+    if question not in already_seen_context_for_question:
+        already_seen_context_for_question[question] = []
     question_embeddings = openai.Embedding.create(
         engine='text-embedding-ada-002',
         input=to_token(question)
@@ -184,12 +188,11 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
     if right_track:
         context = []
         curr_token_count = 0
-        already_seen = []
         for i, row in new_df.sort_values('distances', ascending=True).iterrows():
             if len(context) >= context_limit:
                 break
-            if row['text'] not in already_seen:
-                already_seen.append(row['text'])
+            if row['text'] not in already_seen_context_for_question[question]:
+                already_seen_context_for_question[question].append(row['text'])
                 if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
                     continue
                 curr_token_count += len(tokenizer.encode(row['text']))
@@ -202,19 +205,18 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
         )['data'][0]['embedding']
         context = []
         curr_token_count = 0
-        already_seen = []
         number_skipped_because_of_answer_distance = 0
         for i, row in new_df.sort_values('distances', ascending=True).iterrows():
             if len(context) >= context_limit or number_skipped_because_of_answer_distance > context_limit:
                 break
-            if row['text'] not in already_seen:
+            if row['text'] not in already_seen_context_for_question[question]:
                 
                 if distances_from_embeddings(prev_answer_embeddings, [row['embeddings']], distance_metric='cosine')[0] - row['distances'] < 0:
                     # this means that the current row is further away from the previous answer, so we skip this one.
                     number_skipped_because_of_answer_distance += 1
                     continue
 
-                already_seen.append(row['text'])
+                already_seen_context_for_question[question].append(row['text'])
                 if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
                     continue
                 curr_token_count += len(tokenizer.encode(row['text']))
@@ -260,6 +262,7 @@ def get_multi_line_input():
     return inp
 
 while(True):
+    already_seen_context_for_question = {}
     # Ask the user for a question from the console
     print(colored("Enter a new question (or type \"exit\") and press Ctrl-D or Ctrl-Z (windows) in a new line to ask: ", "cyan"))
     question = get_multi_line_input()
@@ -283,7 +286,7 @@ while(True):
 
         if len(context) == 0:
             print("Answer: ")
-            print(colored("I don't know.", "green"))
+            print(colored("I don't know. Please provide more context to the question.", "green"))
             break
 
         prompt = f"You are a friendly developer who is an expert at SuperTokens and authentication. Answer the question based on the context below, and if the question can't be answered with a high degree of certainty, based on the context, say \"I don't know\". Each context starts with the title \"New Context:\" and is in a new chat. You can ignore a context if it's not relevant to the question, and if there is no context that is relevant, say \"I don't know\". Do not mention the context directly in your answer. Do not provide code snippets unless it's mentioned in the context already, or if the question specifically asks for code snippets."
@@ -313,6 +316,45 @@ while(True):
             model="gpt-3.5-turbo",
         )
         prev_answer = response["choices"][0]["message"]["content"].strip()
+
+
+        # now we ask chatgpt to tell us if the question is actually answered (without the context)
+        prompt = f"You are a strict teacher and an expert at SuperTokens and authentication. You are grading someone's answer to a question. Give a score out of 10, where 10 indicates that the question is directly and well answered, whereas 0 indicates that the answer is completely wrong or irrelevant to the question. Answer with just a number and not a word more.\n\nQuestion:\n\"\"\"{question}\"\"\"\n\nAnswer:\"\"\"\n{prev_answer}\"\"\"\n\nScore: "
+
+        messages = [{"role": "user", "content": prompt}]
+
+        response = openai.ChatCompletion.create(
+            messages=messages,
+            temperature=0,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            model="gpt-3.5-turbo",
+        )
+        try:
+            score = float(response["choices"][0]["message"]["content"].strip())
+        except ValueError:
+            score = -1
+        if debug:
+            print()
+            print()
+            print(colored("============ANSWER SCORE===============", "red"))
+            print(colored(score, "yellow"))
+            print()
+            print(colored(prev_answer, "yellow"))
+            print()
+            print()
+        
+        # it's very lenient at giving scores.. so if it's <= 7, we will try and get more context
+        if score != -1 and score <= 7:
+            right_track = False
+            print()
+            print(colored("Thinking some more...", "cyan"))
+            print()
+            continue
+
+
         print("Answer: ")
         print(colored(prev_answer, "green"))
         print()
@@ -325,17 +367,6 @@ while(True):
             print()
             break
 
-        # enriching the existing context with the previous question / answer just was a bad idea cause it just added it to the new context for the new question..
-        # enrich_embeddings_text = "Question: " + question + "\n=============\n" + "Answer: " + prev_answer
-        # enrich_embeddings_vector = openai.Embedding.create(
-        #     engine='text-embedding-ada-002',
-        #     input=to_token(enrich_embeddings_text)
-        # )['data'][0]['embedding']
-
-        # new_df = pd.concat([new_df, pd.DataFrame({
-        #     'text': enrich_embeddings_text,
-        #     'embeddings': [np.array(enrich_embeddings_vector)]
-        # })], ignore_index=True)
 
         print()
         print(colored("Thinking...", "cyan"))

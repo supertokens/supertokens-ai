@@ -59,7 +59,6 @@ The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
 We pick up test cases from our discord channel. To add a thread as a new test case, post the message with the text: `st-bot-test-case`, and all messages up until this one will be added to the test embeddings file.
 
 # Example questions it does not do well at even though the answers are in the docs:
-- Hi, how to add new OAuth methods to supertokens ? like Steam or Epic Games ? -> gives a lot of information related to being an oauth provider, which is unrelated to the question (but is confused with oauth client vs provider).
 - Code snippets provided are sometimes quite wrong. For example, when querying how to fetch user's profile from google, it replies with the correct answer, but when setting the metadata, it uses `supertokens.setUserMetadata` which doesn't exist.
 - When should i use supertokens' metadata recipe vs storing the metadata in my own db?
 - Hi how can i get the session id after login ? -> results in it calling createNewSession, and then when prompted after by "No. I mean when the user is logged in, and they make a request from the frontend with a session. How do i get the session id from that request?" -> it returns calling getSession, but with auth-react SDK
