@@ -208,12 +208,11 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
             if len(context) >= context_limit or number_skipped_because_of_bad_context >= context_limit:
                 break
             if row['text'] not in already_seen_context_for_question[question]:
-
+                already_seen_context_for_question[question].append(row['text'])
                 if not is_context_relevant_according_to_gpt(row['text'], question):
                     number_skipped_because_of_bad_context += 1
                     continue
 
-                already_seen_context_for_question[question].append(row['text'])
                 if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
                     continue
                 curr_token_count += len(tokenizer.encode(row['text']))
@@ -231,7 +230,8 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
             if len(context) >= context_limit or number_skipped_because_of_answer_distance >= context_limit or number_skipped_because_of_bad_context >= context_limit:
                 break
             if row['text'] not in already_seen_context_for_question[question]:
-
+                already_seen_context_for_question[question].append(row['text'])
+                
                 if not is_context_relevant_according_to_gpt(row['text'], question):
                     number_skipped_because_of_bad_context += 1
                     continue
@@ -241,7 +241,6 @@ def get_top_embeddings_up_to_limit(question, prev_answer, right_track, context_l
                     number_skipped_because_of_answer_distance += 1
                     continue
 
-                already_seen_context_for_question[question].append(row['text'])
                 if (curr_token_count + len(tokenizer.encode(row['text']))) > token_limit:
                     continue
                 curr_token_count += len(tokenizer.encode(row['text']))
