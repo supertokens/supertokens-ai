@@ -403,7 +403,7 @@ while(True):
         messages.append({"role": "user", "content": question})
         messages.append({"role": "system", "content": prev_answer})
         messages.append({"role": "user", "content": more_context})
-        messages.append({"role": "user", "content": "Rephrase my question (pretending you are me) based on the conversation above retaining any code snippets provided by me and do not loose out on any information.\n\nBased on my reply to your answer, do you think you are on the right track to answering the question?. If you think that you are on the right track, say \"yes\", else say \"no\".\n\nExample output format is:\n\"\"\"Rephrased question: ....\n\nRight track: yes\"\"\"\n\nRephrased question:"})
+        messages.append({"role": "user", "content": "Rephrase my question (pretending you are me) based on the conversation above, retaining any code snippets provided by me, and do not loose out on any information.\n\nBased on my reply to your answer, do you think you are on the right track to answering the question?. If you think that you are on the right track, say \"yes\", else say \"no\".\n\nExample output format is:\n\"\"\"Rephrased question: ....\n\nRight track: yes\"\"\"\n\nRephrased question:"})
         response = openai.ChatCompletion.create(
             messages=messages,
             temperature=0,
