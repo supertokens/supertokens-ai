@@ -62,6 +62,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - Code snippets provided are sometimes quite wrong. For example, when querying how to fetch user's profile from google, it replies with the correct answer, but when setting the metadata, it uses `supertokens.setUserMetadata` which doesn't exist.
 - When should i use supertokens' metadata recipe vs storing the metadata in my own db?
 - Hi how can i get the session id after login ? -> results in it calling createNewSession, and then when prompted after by "No. I mean when the user is logged in, and they make a request from the frontend with a session. How do i get the session id from that request?" -> it returns calling getSession, but with auth-react SDK
+- is there any API for healthchecks in supertokens core? -> instead of returning i don't know, it returns with /health
 
 # Improvements idea:
 - Instead of adding context, fine tune a new model.
