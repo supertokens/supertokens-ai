@@ -269,7 +269,7 @@ while(True):
     print(colored("Thinking...", "cyan"))
     print()
     
-    debug = False
+    debug = os.environ.get('DEBUG') is not None 
     if question.startswith("DEBUG "):
         question = question.replace("DEBUG ", "")
         debug = True
