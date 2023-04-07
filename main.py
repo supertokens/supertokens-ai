@@ -320,7 +320,7 @@ while(True):
 
 
         # now we ask chatgpt to tell us if the question is actually answered (without the context)
-        prompt = f"You are a strict teacher and an expert at SuperTokens and authentication. You are grading someone's answer to a question. Give a score out of 10, where 10 indicates that the question is directly and well answered, whereas 0 indicates that the answer is completely wrong or irrelevant to the question. Answer with just a number and not a word more.\n\nQuestion:\n\"\"\"{question}\"\"\"\n\nAnswer:\"\"\"\n{prev_answer}\"\"\"\n\nScore: "
+        prompt = f"You are a strict teacher and an expert at SuperTokens and authentication. You are grading someone's answer to a question. Give a score out of 10, where 10 indicates that the answer is helpful and resolved the question, whereas 0 indicates that the answer is completely wrong or irrelevant to the question. Answer with just a number and not a word more.\n\nQuestion:\n\"\"\"{question}\"\"\"\n\nAnswer:\"\"\"\n{prev_answer}\"\"\"\n\nScore: "
 
         messages = [{"role": "user", "content": prompt}]
 
