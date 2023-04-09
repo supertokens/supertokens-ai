@@ -11,7 +11,7 @@ Open the .env file and set:
 ### Step 2: Install dependencies and setup knowledge base
 ```bash
 pip install -r requirements.txt
-python split_or_union_data_files.py
+python init.py
 ```
 
 ## Asking questions
@@ -41,9 +41,7 @@ python split_or_union_data_files.py
 
 ### Updating discord knowledge base
 ```bash
-python fetch_discord.py
-python create_discord_embeddings.py
-python split_or_union_data_files.py
+python update_discord.py
 ```
 
 # Debugging prompts

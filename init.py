@@ -1,0 +1,2 @@
+from split_or_union_data_files import perform_split_or_union
+perform_split_or_union()
