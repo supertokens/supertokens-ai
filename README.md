@@ -16,7 +16,7 @@ python init.py
 
 ## Asking questions
 ```bash
-python main.py
+python src/main.py
 ```
 
 Once you type out a question, press Ctrl-D or Ctrl-Z (windows) in a new line to submit it.
@@ -39,13 +39,7 @@ python update_discord.py
 ```
 
 # Debugging prompts
-If you want to see the full prompt that is set to the OpenAI model, you can ask questions like:
-```bash
-Enter a new question (or type exit) and press Ctrl-D or Ctrl-Z (windows) in a new line to ask:
-DEBUG Does supertokens support m2m auth?
-```
-
-The `DEBUG` keyword will print the full prompt that is sent to the OpenAI model.
+Add `DEBUG=true` in the `.env` file
 
 # Adding to test cases
 We pick up test cases from our discord channel. To add a thread as a new test case, post the message with the text: `st-bot-test-case`, and all messages up until this one will be added to the test embeddings file.
@@ -56,6 +50,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - Hi how can i get the session id after login ? -> results in it calling createNewSession, and then when prompted after by "No. I mean when the user is logged in, and they make a request from the frontend with a session. How do i get the session id from that request?" -> it returns calling getSession, but with auth-react SDK
 - is there any API for healthchecks in supertokens core? -> instead of returning i don't know, it returns with /health
 - How can I send a refresh token to the server when I receive a 401 error with the message "try refresh token"? Can you provide some code snippets to help me understand how to do this? -> this gives a full code snippet instead of saying that our frontend interceptors do the refreshing.
+- how to do optional protection of route on the frontend?
 
 # Improvements idea:
 - Instead of adding context, fine tune a new model.
