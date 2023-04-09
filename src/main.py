@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from context_agent import get_context, clear_already_seen_context_for_question
 from question_answer_agent import get_answer
 from grading_agent import get_if_on_right_track_based_on_grade
-from utils import get_multi_line_input
 from human_feedback_agent import get_rephrased_question, get_human_feedback_sentiment
+from utils import get_multi_line_input
 load_dotenv()
 
 while(True):
