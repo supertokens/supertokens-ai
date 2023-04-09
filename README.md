@@ -30,13 +30,7 @@ Open the .env file and set:
 
 ### Updating docs knowledge base
 ```bash
-python main.py --update
-```
-
-Once it prompts you to ask a question, you can exit the program and run:
-
-```bash
-python split_or_union_data_files.py
+python update_docs.py
 ```
 
 ### Updating discord knowledge base
