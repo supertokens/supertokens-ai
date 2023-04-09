@@ -107,7 +107,7 @@ def convert_mdx_to_chunks(root_dir, chunk_size):
                     if (len(tokenizer.encode(contents)) > chunk_size):
                         h2chunks = re.split(r'(?<=^##\s)', contents, flags=re.MULTILINE)
                         for chunk in h2chunks:
-                            finalChunk_without_tags = re.sub(r'<[^>]+>', '', chunk)
+                            finalChunk_without_tags = re.sub(r'(?<=\n|[>]\n)\s*<[^>]+>', '', chunk)
                             finalChunk_without_tags = finalChunk_without_tags.replace("##", "")
                             finalChunk_without_tags = finalChunk_without_tags.replace(":::", "")
                             chunk_within_token_limit = split_into_many(finalChunk_without_tags, chunk_size)
