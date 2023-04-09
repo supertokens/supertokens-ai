@@ -384,7 +384,7 @@ while(True):
         print("Answer: ")
         print(colored(prev_answer, "green"))
         print()
-        print(colored("WARNING: Code snippets / answer suggested by the bot may be wrong. For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
+        print(colored("WARNING: Answer suggested by the bot may be wrong (especially code snippets). For additional help, please ask on our Discord server: https://supertokens.com/discord", "red"))
         print()
 
         print(colored("Your reply (type \"new\" for a new question, or \"exit\"): ", "cyan"))
