@@ -7,25 +7,6 @@ load_dotenv()
 
 debug = os.environ.get('DEBUG') is not None
 
-def get_human_feedback_sentiment(question, answer, human_feedback):
-    messages = []
-    messages.append({"role": "user", "content": f"You are sentiment analysis bot. Based on the conversation below, do you think that \"Person 1\" is happy with the answer?\n\n=====\n\nPerson 1:\n{question}\n\nPerson 2:\n{answer}\n\nPerson 1:\n{human_feedback}\n\n====\n\nYou should only respond in JSON format as described below, and not a single word more.\n\nRESPONSE FORMAT:\n{{\n    \"is_person_1_happy\": boolean\n}}\n\nEnsure the response can be parsed by Python json.loads"})
-
-    resp = chat_completion(messages)
-
-    if debug:
-        print()
-        print(colored("============SENTIMENT FROM HUMAN FEEDBACK AGENT===========", "red"))
-        print(colored(resp, "yellow"))
-    
-    try:
-        json_parsed = json.loads(resp)
-        return json_parsed["is_person_1_happy"]
-    except Exception:
-        return True
-
-
-
 def get_rephrased_question(question, answer, human_feedback):
     messages = []
     messages.append({"role": "user", "content": "QUESTION:\n" + question + "\n\nAnswer: "})
