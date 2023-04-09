@@ -15,7 +15,7 @@ def get_human_feedback_sentiment(question, answer, human_feedback):
 
     if debug:
         print()
-        print(colored("============RIGHT_TRACK_RESPONSE FROM HUMAN FEEDBACK AGENT===========", "red"))
+        print(colored("============SENTIMENT FROM HUMAN FEEDBACK AGENT===========", "red"))
         print(colored(resp, "yellow"))
     
     try:
@@ -31,7 +31,7 @@ def get_rephrased_question(question, answer, human_feedback):
     messages.append({"role": "user", "content": "QUESTION:\n" + question + "\n\nAnswer: "})
     messages.append({"role": "system", "content": answer})
     messages.append({"role": "user", "content": "FEEDBACK:\n" + human_feedback})
-    messages.append({"role": "user", "content": "Rephrase my question based on your answer and incorporate my feedback into it, so that the next time i ask the question, i get a better answer. Do not miss out any any code snippets or any information.\n\nRephrased question: "})
+    messages.append({"role": "user", "content": "Rephrase my question above based on my feedback above, so that the next time i ask the question, i get a better answer. Do not miss out any any code snippets or any information from my question or feedback.\n\nRephrased question: "})
 
     resp = chat_completion(messages)
 

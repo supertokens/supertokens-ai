@@ -68,7 +68,7 @@ while(True):
         print()
         print(colored("Thinking...", "cyan"))
 
-        right_track = get_human_feedback_sentiment(question, prev_answer, human_feedback)
+        # right_track = get_human_feedback_sentiment(question, prev_answer, human_feedback)
 
         question = get_rephrased_question(question, prev_answer, human_feedback)
     
