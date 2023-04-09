@@ -6,100 +6,78 @@ import pandas as pd
 import numpy as np
 load_dotenv()
 
-chunks = [500, 1024, 2048]
-df = {}
-for max_tokens_per_chunk in chunks:
-    embeddings_location = 'processed/' + str(max_tokens_per_chunk) + '-limit.csv'
-    df[max_tokens_per_chunk] = pd.DataFrame(columns=['text', 'embeddings'])
-    if os.path.exists(embeddings_location):
-        df[max_tokens_per_chunk] = pd.read_csv(embeddings_location)
+CHUNKS = [500, 1024, 2048]
 
+def load_docs_embeddings():
+    docs_embeddings = {}
+    for max_tokens_per_chunk in CHUNKS:
+        embeddings_location = f'processed/{max_tokens_per_chunk}-limit.csv'
+        docs_embeddings[max_tokens_per_chunk] = pd.read_csv(embeddings_location)
 
-existing_embeddings = df
+    for chunk in CHUNKS:
+        docs_embeddings[chunk]['embeddings'] = docs_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
 
-for chunk in chunks:
-    existing_embeddings[chunk]['embeddings'] = existing_embeddings[chunk]['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+    return docs_embeddings
 
-new_df = pd.DataFrame(columns=['text', 'embeddings'])
-for chunk in chunks:
-    new_df = pd.concat([new_df, existing_embeddings[chunk]], ignore_index=True)
+def load_discord_embeddings():
+    discord_df = pd.read_csv('processed/discord_threads.csv')
+    discord_df['embeddings'] = discord_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+    return discord_df
 
-existing_embeddings = {} # free up memory
+def load_all_embeddings():
+    docs_embeddings = load_docs_embeddings()
+    discord_embeddings = load_discord_embeddings()
 
-# now we load up discord embeddings
-discord_df = pd.read_csv('processed/discord_threads.csv')
-discord_df['embeddings'] = discord_df['embeddings'].apply(lambda x: eval(str(x))).apply(np.array)
+    embeddings_df = pd.DataFrame(columns=['text', 'embeddings'])
 
-new_df = pd.concat([new_df, discord_df], ignore_index=True)
-discord_df = {} # free up memory
+    for chunk in CHUNKS:
+        embeddings_df = pd.concat([embeddings_df, docs_embeddings[chunk]], ignore_index=True)
 
+    embeddings_df = pd.concat([embeddings_df, discord_embeddings], ignore_index=True)
+
+    return embeddings_df
+
+embeddings_df = load_all_embeddings()
 debug = os.environ.get('DEBUG') is not None 
-
 already_seen_context_for_question = {}
 
 def get_context(question, prev_answer, right_track, context_limit=4, token_limit=2500):
     if question not in already_seen_context_for_question:
         already_seen_context_for_question[question] = []
     question_embeddings = get_embedding(question)
-    new_df['distances'] = distances_from_embeddings(question_embeddings, new_df['embeddings'].values)
+    embeddings_df['distances'] = distances_from_embeddings(question_embeddings, embeddings_df['embeddings'].values)
 
     number_skipped_because_of_bad_context = 0
-    if right_track:
-        context = []
-        curr_token_count = 0
-        for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-            if len(context) >= context_limit or number_skipped_because_of_bad_context >= context_limit:
-                break
-            if row['text'] not in already_seen_context_for_question[question]:
-                already_seen_context_for_question[question].append(row['text'])
-                if not is_context_relevant_according_to_gpt(row['text'], question):
-                    number_skipped_because_of_bad_context += 1
-                    continue
+    number_skipped_because_of_answer_distance = 0
+    context = []
+    curr_token_count = 0
+    for i, row in embeddings_df.sort_values('distances', ascending=True).iterrows():
+        if len(context) >= context_limit or number_skipped_because_of_bad_context >= context_limit or number_skipped_because_of_answer_distance >= context_limit:
+            break
+        if row['text'] not in already_seen_context_for_question[question]:
+            already_seen_context_for_question[question].append(row['text'])
+            
+            if not is_context_relevant_according_to_gpt(row['text'], question):
+                number_skipped_because_of_bad_context += 1
+                continue
 
-                if (curr_token_count + len(to_token(row['text']))) > token_limit:
+            token_count = len(to_token(row['text']))
+
+            if right_track or distances_from_embeddings(get_embedding(prev_answer), [row['embeddings']])[0] - row['distances'] >= 0:
+                if (curr_token_count + token_count) > token_limit:
                     continue
-                curr_token_count += len(to_token(row['text']))
+                curr_token_count += token_count
                 context.append(row['text'])
+            else:
+                number_skipped_because_of_answer_distance += 1
         
-        if debug:
-            for c in context:
-                print()
-                print(colored("=========NEW CONTEXT BELOW=========", "red"))
-                print(colored(c, "yellow"))
+    if debug:
+        for c in context:
+            print()
+            print(colored("=========NEW CONTEXT BELOW=========", "red"))
+            print(colored(c, "yellow"))
 
-        return context
-    else:
-        prev_answer_embeddings = get_embedding(prev_answer)
-        context = []
-        curr_token_count = 0
-        number_skipped_because_of_answer_distance = 0
-        for i, row in new_df.sort_values('distances', ascending=True).iterrows():
-            if len(context) >= context_limit or number_skipped_because_of_answer_distance >= context_limit or number_skipped_because_of_bad_context >= context_limit:
-                break
-            if row['text'] not in already_seen_context_for_question[question]:
-                already_seen_context_for_question[question].append(row['text'])
-                
-                if not is_context_relevant_according_to_gpt(row['text'], question):
-                    number_skipped_because_of_bad_context += 1
-                    continue
-                
-                if distances_from_embeddings(prev_answer_embeddings, [row['embeddings']])[0] - row['distances'] < 0:
-                    # this means that the current row is further away from the previous answer, so we skip this one.
-                    number_skipped_because_of_answer_distance += 1
-                    continue
-
-                if (curr_token_count + len(to_token(row['text']))) > token_limit:
-                    continue
-                curr_token_count += len(to_token(row['text']))
-                context.append(row['text'])
-        
-        if debug:
-            for c in context:
-                print()
-                print(colored("=========NEW CONTEXT BELOW=========", "red"))
-                print(colored(c, "yellow"))
-
-        return context
+    return context
         
 
 def is_context_relevant_according_to_gpt(context, question):
