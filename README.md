@@ -51,7 +51,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - is there any API for healthchecks in supertokens core? -> instead of returning i don't know, it returns with /health
 - How can I send a refresh token to the server when I receive a 401 error with the message "try refresh token"? Can you provide some code snippets to help me understand how to do this? -> this gives a full code snippet instead of saying that our frontend interceptors do the refreshing.
 - how to do optional protection of route on the frontend?
-- I want to log the user out when their subscription is ended. Is there any way I can set custom expiry to cookies and sessions for each user based on their subscription? The default time will be 7 days but users with less than 7 days remaining on their subscription will have the session & cookies expiry date the same as their subscription end date.
+- I want to log the user out when their subscription is ended. Is there any way I can set custom expiry to cookies and sessions for each user based on their subscription? The default time will be 7 days but users with less than 7 days remaining on their subscription will have the session & cookies expiry date the same as their subscription end date (works with gpt4).
 - After signup by EmailPassword when I call POST /auth/signinup/code and passing phonenumber I get Please provide exactly one of email or phoneNumber
 
 # Improvements idea:
