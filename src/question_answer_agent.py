@@ -14,7 +14,7 @@ def get_answer(question, context):
         messages.append({"role": "user", "content": "New Context:\n" + context[i]})
     messages.append({"role": "user", "content": "Question:\n" + question})
     messages.append({"role": "user", "content": "Answer:"})
-    answer = chat_completion(messages)
+    answer = chat_completion(messages, True)
 
     if debug:
         print()
