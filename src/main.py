@@ -11,6 +11,8 @@ from human_feedback_agent import get_rephrased_question
 from utils import get_multi_line_input
 load_dotenv()
 
+debug = os.environ.get('DEBUG', "false") == "true"
+
 while(True):
     clear_already_seen_context_for_question()
     
@@ -21,11 +23,6 @@ while(True):
 
     print()
     print(colored("Thinking...", "cyan"))
-    
-    debug = os.environ.get('DEBUG') is not None 
-    if question.startswith("DEBUG "):
-        question = question.replace("DEBUG ", "")
-        debug = True
 
     more_context = ""
 

@@ -5,7 +5,7 @@ from llm import chat_completion
 import json
 load_dotenv()
 
-debug = os.environ.get('DEBUG') is not None
+debug = os.environ.get('DEBUG', "false") == "true"
 
 def get_rephrased_question(question, answer, human_feedback):
     messages = []

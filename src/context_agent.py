@@ -38,7 +38,7 @@ def load_all_embeddings():
     return embeddings_df
 
 embeddings_df = load_all_embeddings()
-debug = os.environ.get('DEBUG') is not None 
+debug = os.environ.get('DEBUG', "false") == "true"
 already_seen_context_for_question = {}
 
 def get_context(question, prev_answer, right_track, context_limit=4, token_limit=2500):
