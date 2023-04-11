@@ -1,11 +1,14 @@
 import openai
 import tiktoken
+from termcolor import colored
 from dotenv import load_dotenv
 import os
 import time
 import random
 from openai.embeddings_utils import distances_from_embeddings
 load_dotenv()
+
+debug = os.environ.get('DEBUG', "false") == "true"
 
 tokenizer = tiktoken.get_encoding("cl100k_base")
 openai.api_key = os.environ.get('OPEN_AI_KEY')
@@ -31,6 +34,8 @@ def chat_completion(messages, use_gpt4=False):
             return response["choices"][0]["message"]["content"].strip()
         except Exception as e:
             if "That model is currently overloaded with other requests" in str(e):
+                if debug:
+                    print(colored("Rate limit reached of LLM. Waiting for sometime and trying again...", "yellow"))
                 # sleep for a random amount of time
                 time.sleep(random.random() * 3)
                 continue
