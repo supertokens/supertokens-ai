@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 from context_agent import get_context, clear_already_seen_context_for_question
 from question_answer_agent import get_answer
-from grading_agent import get_if_on_right_track_based_on_grade
+from grading_agent import get_if_on_right_track_based_on_grade, is_hallucination
 from human_feedback_agent import get_rephrased_question
 from utils import get_multi_line_input
 load_dotenv()
@@ -43,6 +43,8 @@ while(True):
         # now we grade the answer is based on that we know if we
         # are on the right track or not. The automated grading agent will do this.
         right_track = get_if_on_right_track_based_on_grade(question, prev_answer)
+
+        right_track = not is_hallucination(question, context, prev_answer)
 
         if not right_track:
             # this will cause a revision in the context being used, or if no other relevant context is found, we will tell the bot to say i don't know.

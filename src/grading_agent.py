@@ -26,3 +26,25 @@ def get_if_on_right_track_based_on_grade(question, answer):
     return True
         
 
+def is_hallucination(question, context, answer):
+    for c in context:
+        if is_answer_relevant(question, c, answer):
+            return False
+    return True
+
+
+def is_answer_relevant(question, context, answer):
+    is_relevant = False
+    prompt = f"Below is a question, context and an answer. Given these tell me if the answer is derived from the context. You MUST answer in only \"yes\" or \"no\" and not a word more:\n\n======QUESTION======\n{question}\n\n======CONTEXT======\n{context}\n\n======ANSWER======\n{answer}"
+
+    messages = [{"role": "user", "content": prompt}]
+    resp = chat_completion(messages)
+    if resp.lower() == "yes" or resp.lower() == "yes.":
+        is_relevant = True
+    
+    if debug:
+        print()
+        print(colored("============IS HALLUCINATION===============", "red"))
+        print(colored(str(not is_relevant), "yellow"))
+
+    return is_relevant

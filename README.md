@@ -70,4 +70,3 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - When links are provided in the context, fetch the page and add the text to the context (by summarizing the context along with the contents of the link to create a new context).
 - When reasking question, add the previous question and the previous answer as well.
 - Do we really need so many chunks of docs (referring to using 500, 1024 and 2048 sizes chunks)
-- After getting the answer, check that if the answer was derived from one of the context and if not, reject the answer (hallucination)
