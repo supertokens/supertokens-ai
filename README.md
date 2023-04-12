@@ -74,13 +74,22 @@ Is there any way we can restrict this sharing? -> this eventually starts suggest
 - Do we really need so many chunks of docs (referring to using 500, 1024 and 2048 sizes chunks)
 - Build a correction data set. Users who use the bot in debug mode can give the bot correction points based on the answer. The correction points are saved along with the question, answer and correction point (being the context), and then post getting an answer, we can fetch relevant correction points and then run the answer through all of them to make the answers better (some of these can be applied to all answers maybe? Have a way to add that dynamically). Here is an example template for the same:
     ```
-    Your job is to correct or rephrase the answer below based on the correct criteria. If the correction criteria doesn't apply to the answer, do NOT change the answer in any way whatsoever.
-
-    =====QUESTION=====
-    I would like to continue to store information such as name, phone number and so on per user. Do I prefer to use an external database for this or can I also implement this in Supertokens?
+    Your job is to correct or rephrase the answer below based on the correct criteria. If the correction criteria doesn't apply to the answer, do NOT change the answer in any way whatsoever, and write back the answer as is.
 
     =====ANSWER=====
-    According to the conversation, Supertokens does not have a built-in feature to store user information such as name, phone number, etc. You can use an external database to store this information and associate it with the user ID. Alternatively, you can wait for the user metadata feature that Supertokens is working on, which will allow you to store user information in the database easily.
+    Yes, the default cookie-based authentication should work properly on all browsers, including Safari, as long as the cookie domain is set to the base domain (mysite.com) and not a subdomain (e.g. api.mysite.com). This will allow the cookie to be shared across all subdomains of mysite.com.
+
+    =====CORRECTION CRITERIA=====
+    Whenever referring to cookieDomain and talking about sub domains, if specifying a value for the cookieDomain, make the cookieDomain start with a ".". For example, if saying that the cookieDomain is "example.com", instead say that it is ".example.com". This is because if cookies are to be shared across sub domains, they need to start with a leading "."
+
+    Rephrased answer:
+    ```
+    OR
+    ```
+    Your job is to correct or rephrase the answer below based on the correct criteria. If the correction criteria doesn't apply to the answer, do NOT change the answer in any way whatsoever, and write back the answer as is.
+
+    =====ANSWER=====
+    According to the conversation,the default cookie-based authentication should work properly on all browsers, including Safari, as long as the cookie domain is set to the base domain (mysite.com) and not a subdomain (e.g. api.mysite.com). This will allow the cookie to be shared across all subdomains of mysite.com.
 
     =====CORRECTION CRITERIA=====
     Never mention things like according to the conversation, or according to the context. Do not refer to the context in your answer.
