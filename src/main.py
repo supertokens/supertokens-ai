@@ -44,6 +44,11 @@ while(True):
         # are on the right track or not. The automated grading agent will do this.
         right_track = get_if_on_right_track_based_on_grade(question, prev_answer)
 
+        if not right_track:
+            # this will cause a revision in the context being used, or if no other relevant context is found, we will tell the bot to say i don't know.
+            number_of_bad_grade_iterations += 1
+            continue
+
         right_track = not is_hallucination(question, context, prev_answer)
 
         if not right_track:
