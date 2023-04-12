@@ -53,6 +53,8 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - how to do optional protection of route on the frontend?
 - I want to log the user out when their subscription is ended. Is there any way I can set custom expiry to cookies and sessions for each user based on their subscription? The default time will be 7 days but users with less than 7 days remaining on their subscription will have the session & cookies expiry date the same as their subscription end date (works with gpt4).
 - After signup by EmailPassword when I call POST /auth/signinup/code and passing phonenumber I get Please provide exactly one of email or phoneNumber
+- Hi Guys, we have two react apps abc.example.com and xyz.example.com. And these are talking to a single server express app iou.example.com. Our issue is when we login into abc.example.com it automatically changes the cookie value for xyz, and shows it also as logged in. We have also tried adding sessionScope value to an exact domain, but the session is still being shared. 
+Is there any way we can restrict this sharing? -> this eventually starts suggesting to use `cookieName` config in session.init, which does not exist
 
 # Improvements idea:
 - Instead of adding context, fine tune a new model.
