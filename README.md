@@ -232,6 +232,7 @@ Something like this:
     responseStructure:{
         type: "string",
         validator: llmSimilarityChecker
-    }
+    },
+    model: "gpt-4"
 }
 ```
