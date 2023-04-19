@@ -96,3 +96,142 @@ Is there any way we can restrict this sharing? -> this eventually starts suggest
 
     Rephrased answer:
     ```
+
+## Testing methodology:
+
+The idea is to test per prompt. A prompt has the following types:
+- Fixed Template: This is the hardcoded part prompt given to the llm.
+- Variables:
+    - Derived variables: These are variables that are non user input, but are derived based on the user input.
+    - User input variables: This is the user input string.
+- Response:
+    - Free form: Response that is free form language.
+    - Fixed structure: Responses that are input to other program code flow. It can be a json, or a "yes" or "no" etc.. essentially these are not user facing response.
+    - Composite: This is a response that is a combination of free form and fixed structure. For example, a json that has a free form string in it which is displayed to the user, and a boolean value used to continue the code flow.
+- Model used
+
+### Changes in the prompt:
+
+From the above, whilst in development, any of the above can change:
+- Fixed template change: 
+    - In this case, we will take all the previously seen user and derived input and run it through the new prompt and evaluate the response.
+- Derived variable change:
+    - In this case, we will take all the previously seen user input and prompt and run it through the new derived variables and evaluate the response.
+    - Derived variable names must have a fixed key in the template.
+    - Derived variable changes mean that the new derived variables must be fetched from somewhere, so we need to allow the user to provide a function that will return the new derived variables for a given user input.
+- User input change:
+    - Since these are user inputs, we don't really need to test changes in them.
+- Model used:
+    - In this case, we will take all the previous prompts, user input, derived variables and run it through the new model and evaluate the response.
+
+### Evaluation of the response:
+In general, we can define response evaluators some args returns a boolean saying passed or not.
+
+- String response:
+    - The input will be two strings.
+    - We can use LLM to ask if the responses are similar in meaning, and if not, we return an error.
+    - Or we can do string comparison.
+- Fixed structure response:
+    - The input will be two strings and a structure type (containing the type structure and the validators for each of the fields.).
+    - We can ask the user to define a structure type for this:
+        - boolean
+        - number
+        - string
+        - JSON with these fields and their data types
+    - Strings will be evaluated based on string response
+- Custom response validators:
+    - These can be used for example to know if the resulting code is valid or not from a types point of view. The user will have to define this on their own.
+
+The key point is that these are all just functions that can be used defined or pre built.
+
+Once the evaluator has run, we will check if the test case is a positive or not for that particular (part of the) response, and if the test case is positive, then we must make sure that the response is "similar" to the test case response, else we must make sure that the response is "not similar" to the test case.
+
+Example definition of response structure:
+```
+jsonChecker({
+    type: "json",
+    fields: {
+        "name": {
+            type: "string",
+            validator: (actual, expected) => {
+                return actual === expected
+            }
+        },
+        "age": {
+            type: "number",
+            validator: (actual, expected) => {
+                return value === expected
+            }
+        },
+        "description": {
+            type: "string",
+            validator: llmSimilarityChecker
+        }
+    }
+})(actual, expected)
+```
+- In this case, the `llmSimilarityChecker` is a pre defined checker which prompts an LLM to check if the actual and expected are similar or not.
+
+### Collection of testing data:
+When each time an LLM is used, we can save the input template, variables etc and also save the response. All this will be then saved in a db. The user can then later on go through that and mark the output as valid or not for each of the use cases.
+
+It's important to note that each part of a response must be marked as good or bad (based on the response structure).
+
+This requires the user to define the response structure for each prompt which tallies with the response structure given to the response validator as well.
+
+The data is stored against the current template.
+
+### Storage of testing data:
+
+For each prompt, we must store:
+- The template
+    - The keys in the template (variable place holders) must be in a special format in the template so tat we can identify their positions.
+- The derived variables:
+    - Key of the variable
+    - Value of the variable
+- The user input
+- model used
+- Response:
+    - The structure of the response
+    - The full response text
+    - For each part (in the structure) of the response, the particular value of that part
+    - For each part, if it's marked as good or bad by the user.
+
+### Running tests:
+Each time the user changes the code, they will also have to make changes to the prompt definitions for tests. When the tests are run, we check what part of the prompt has changed since the last change and we run the test against that.
+
+### Invalidating / updating older test cases:
+Each part of the prompt can change, and that has effects on what tests are run:
+- The template changes:
+    - In this case, we will run the test against the last prompt change data and see the output.
+    - The output of this test will be saved against the current prompt as the new data set for this prompt. The new data set will be also auto marked as good or bad based on the previous test results and if it passed the current test or not.
+- The derived variables change:
+    - This will not cause a new prompt version. Instead, it will just overwrite the existing derived variables for each test case once all tests pass.
+- The user input change:
+    - No action needed here
+- The model used change:
+    - This is similar to the case of a new prompt version
+- Response structure change:
+    - The user will have to define a function to change the older response format to the newer one, and rerun the tests
+    - On test run, the new response will overwrite the older one once all tests pass
+
+### Defining a prompt:
+Something like this:
+
+```
+{
+    id: "template1",
+    template: "Please answer this question based on the context:\nContext:{context}\n\nQuestion:\n{question}\n\nAnswer:",
+    derivedVariables: [{
+        key: "context",
+        getValue: (userInputMap: { [key: string]: string }) => {
+            return ...
+        }
+    }],
+    userInputVariables: ["question"],
+    responseStructure:{
+        type: "string",
+        validator: llmSimilarityChecker
+    }
+}
+```
