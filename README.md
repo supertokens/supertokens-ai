@@ -58,6 +58,7 @@ Is there any way we can restrict this sharing? -> this eventually starts suggest
 - which version of java does supertokens support -> it gets the right answer, but the hallucination agent thinks it's hallucinating..
 
 # Improvements idea:
+- When creating docs chunks, add overlapping between chunks
 - Instead of summarizing the question each time, only summarize it when we reach the token limit of the new question + context
 - Instead of adding context, fine tune a new model.
 - Add real time learning: After every answer, the bot can ask for positive or negative feedback. If positive, the bot can save the question and answer as new embeddings in the knowledge base. If negative feedback, the bot can ask for the correct answer and save that as new embeddings.
