@@ -55,6 +55,7 @@ We pick up test cases from our discord channel. To add a thread as a new test ca
 - After signup by EmailPassword when I call POST /auth/signinup/code and passing phonenumber I get Please provide exactly one of email or phoneNumber
 - Hi Guys, we have two react apps abc.example.com and xyz.example.com. And these are talking to a single server express app iou.example.com. Our issue is when we login into abc.example.com it automatically changes the cookie value for xyz, and shows it also as logged in. We have also tried adding sessionScope value to an exact domain, but the session is still being shared. 
 Is there any way we can restrict this sharing? -> this eventually starts suggesting to use `cookieName` config in session.init, which does not exist
+- which version of java does supertokens support -> it gets the right answer, but the hallucination agent thinks it's hallucinating..
 
 # Improvements idea:
 - Instead of adding context, fine tune a new model.
